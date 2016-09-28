@@ -12,10 +12,18 @@ async def on_ready():
     print('Bot ID: ' + bot.user.id)
     await bot.change_status(game=discord.Game(name='with Rem')) 
 
-@client.event
-async def on_message(message):
-    if message.content.startswith('baka'):
-        await client.send_message(message.channel, 'you baka')
+@bot.command()
+async def rtd(min_number : str ,max_number: str):
+    """Rolls the Dice function, takes in integers"""
+    random.seed()
+    
+    try:
+        dice_number = random.randint(int(str(min_number)), int(str(max_number)))
+    except Exception:
+        await bot.say('Invalid Input, Please enter numbers only')
+        return
+
+    await bot.say('You rolled ' + str(int(dice_number))) 
 
 '''Bot execution using token'''
 bot.run('MTcxNTQ0NzI2MTU4MTgwMzU0.CsZ7hA.j8pERaIZY0SObQujX2C0Yyb8HIU')
