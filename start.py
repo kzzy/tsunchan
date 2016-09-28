@@ -10,7 +10,7 @@ bot = commands.Bot(command_prefix='!')
 async def on_ready():
     print('Logged in as: ' + bot.user.name)
     print('Bot ID: ' + bot.user.id)
-    await bot.change_status(game=discord.Game(name='with Rem')) 
+    await bot.change_status(game=discord.Game(name='with Rem'))
 
 @bot.command()
 async def rtd(min_number : str ,max_number: str):
@@ -32,7 +32,7 @@ async def rps(user_hand : str):
     random.seed()
     
     bot_choice = random.choice(["rock","paper","scissors"])
-   # try:
+    
     if user_hand == "rock" or user_hand == "paper" or user_hand == "scissors" or user_hand == "はさみ":
         if bot_choice == user_hand:
             await bot.say("Its a tie. It isn't like you won or anything! BAKA")
@@ -59,11 +59,6 @@ async def rps(user_hand : str):
              await bot.say ("You lose against Tsundere-chan's Scissors")
     else:
          await bot.say('Invalid input, I want rock, paper or scissors! BAKA')
-            
-                
-    #except Exception:
-    #    await bot.say('')
-    
 
 '''Bot execution using token'''
 bot.run('MTcxNTQ0NzI2MTU4MTgwMzU0.CsZ7hA.j8pERaIZY0SObQujX2C0Yyb8HIU')
