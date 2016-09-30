@@ -1,9 +1,11 @@
 import discord
 from discord.ext import commands
 import random
+import logging
 
 """Command Prefix"""
 bot = commands.Bot(command_prefix='!')
+logging.basicConfig(level=logging.INFO)
 
 @bot.event
 async def on_ready():
