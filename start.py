@@ -2,15 +2,15 @@ import discord
 from discord.ext import commands
 import random
 
-'''Command Prefix'''
+"""Command Prefix"""
 bot = commands.Bot(command_prefix='!')
 
-'''Called on bot done preparing data, NOT FIRST always'''
 @bot.event
 async def on_ready():
+    """Called on bot done preparing data, NOT FIRST always"""
     print('Logged in as: ' + bot.user.name)
     print('Bot ID: ' + bot.user.id)
-    await bot.change_status(game=discord.Game(name='with Rem'))
+    await bot.change_status(game=discord.Game(name='with Ram'))
 
 @bot.command()
 async def rtd(min_number : str ,max_number: str):
@@ -38,29 +38,29 @@ async def rps(user_hand : str):
             await bot.say("Its a tie. It isn't like you won or anything! BAKA")
                 
         elif bot_choice == "rock" and user_hand == "paper":
-            await bot.say("You win against Tsundere-chan's Rock. It's not like I let you win or anything BAKA!")
+            await bot.say("You win against " + bot.user.name + "'s Rock. It's not like I let you win or anything BAKA!")
         elif bot_choice == "rock" and user_hand == "scissors":
-            await bot.say("You lose against Tsundere-chan's Rock")
+            await bot.say("You lose against " + bot.user.name + "'s Rock")
                 
         elif bot_choice == "paper" and user_hand == "rock":
-             await bot.say("You lose against Tsundere-chan's Paper")
+             await bot.say("You lose against " + bot.user.name + "'s Paper")
         elif bot_choice == "paper" and user_hand == "scissors":
-             await bot.say("You win against Tsundere-chan's Paper. It's not like I let you win or anything BAKA!")
+             await bot.say("You win against " + bot.user.name + "'s Paper. It's not like I let you win or anything BAKA!")
                 
         elif bot_choice == "scissors" and user_hand == "rock":
-             await bot.say("You win against Tsundere-chan's Scissors. It's not like I let you win or anything BAKA!")
+             await bot.say("You win against " + bot.user.name + "'s Scissors. It's not like I let you win or anything BAKA!")
                 
         elif bot_choice == "paper" and user_hand == "はさみ":
-             await bot.say("You win against Tsundere-chan's Paper baka weeb")
+             await bot.say("You win against " + bot.user.name + "'s Paper baka weeb")
         elif bot_choice == "rock" and user_hand == "はさみ":
-             await bot.say("You lose against Tsundere-chan's Rock baka weeb")
+             await bot.say("You lose against " + bot.user.name + "'s Rock baka weeb")
                 
         else:
-             await bot.say ("You lose against Tsundere-chan's Scissors")
+             await bot.say ("You lose against " + bot.user.name + "'s Scissors")
     else:
          await bot.say('Invalid input, I want rock, paper or scissors! BAKA')
 
-'''Bot execution using token'''
+"""Bot execution using token"""
 bot.run('MTcxNTQ0NzI2MTU4MTgwMzU0.CsZ7hA.j8pERaIZY0SObQujX2C0Yyb8HIU')
 
     
