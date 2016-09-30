@@ -1,11 +1,18 @@
+import asyncio
 import discord
 from discord.ext import commands
-import random
 import logging
+import random
 
 """Command Prefix"""
 bot = commands.Bot(command_prefix='!')
-logging.basicConfig(level=logging.INFO)
+
+# LOGGING 
+logger = logging.getLogger('discord')
+logger.setLevel(logging.DEBUG)
+handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+logger.addHandler(handler)
 
 @bot.event
 async def on_ready():
@@ -61,7 +68,7 @@ async def rps(user_hand : str):
              await bot.say ("You lose against " + bot.user.name + "'s Scissors")
     else:
          await bot.say('Invalid input, I want rock, paper or scissors! BAKA')
-
+    
 """Bot execution using token"""
 bot.run('MTcxNTQ0NzI2MTU4MTgwMzU0.CsZ7hA.j8pERaIZY0SObQujX2C0Yyb8HIU')
 
