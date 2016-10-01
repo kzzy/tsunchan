@@ -69,7 +69,7 @@ async def rps(user_hand : str):
          await bot.say('Invalid input, I want rock, paper or scissors! BAKA')
 
 @bot.command()
-async def coin():
+async def coinflip():
     """ Flips a coin"""
     random.seed()
     bot_coin = random.choice(["heads", "tails"])
@@ -88,7 +88,7 @@ async def ratewaifu(waifu : str):
         await bot.say("I rate your waifu: " + waifu + " a " + str(int(rating)) + ". Serves you right for picking her BAKA!")
     elif(rating == 10):
         await bot.say("I rate your waifu: " + waifu + " a " + str(int(rating)) + ". She.. isn't that good, b-b-BAKA!")
-    elif(waifu == bot.user.name):
+    elif(waifu == bot.user.name)
         await bot.say("I rate myself a 10! THE BEST, how dare you question me BAKA!")
     else:
         await bot.say("I rate your waifu: " + waifu + " a " + str(int(rating)) + ".")
