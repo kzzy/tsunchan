@@ -68,6 +68,14 @@ async def rps(user_hand : str):
              await bot.say ("You lose against " + bot.user.name + "'s Scissors")
     else:
          await bot.say('Invalid input, I want rock, paper or scissors! BAKA')
+
+@bot.command()
+async def coin():
+    random.seed()
+    bot_coin = random.choice(["heads", "tails"])
+    await bot.say("You want me to flip you a coin? That's it?")
+    await bot.say("*flips*")
+    await bot.say("The coin lands as " + bot_coin)
     
 """Bot execution using token"""
 bot.run('MTcxNTQ0NzI2MTU4MTgwMzU0.CsZ7hA.j8pERaIZY0SObQujX2C0Yyb8HIU')
