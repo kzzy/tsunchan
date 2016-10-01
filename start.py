@@ -62,7 +62,9 @@ async def pick_status():
 
 @bot.command()
 async def rtd(min_number : str ,max_number: str):
-    """ Rolls the Dice function, takes in integers """  
+    """ Rolls the Dice function, takes in integers """
+    random.seed()
+    
     try:
         dice_number = random.randint(int(str(min_number)), int(str(max_number)))
     except Exception:
@@ -75,6 +77,7 @@ async def rtd(min_number : str ,max_number: str):
 async def rps(user_hand : str):
     """ Rock Paper Scissors function, takes in string
         Easter Egg: はさみ For User Scissors in JP """
+    random.seed()
     bot_choice = random.choice(["rock","paper","scissors"])
     
     if user_hand == "rock" or user_hand == "paper" or user_hand == "scissors" or user_hand == "はさみ":
@@ -107,6 +110,7 @@ async def rps(user_hand : str):
 @bot.command()
 async def coinflip():
     """ Flips a coin"""
+    random.seed()
     bot_coin = random.choice(["heads", "tails"])
     
     await bot.say("You want me to flip you a coin? That's it?")
@@ -116,6 +120,7 @@ async def coinflip():
 @bot.command()
 async def ratewaifu(waifu : str):
     """ Rates the given waifu from 1-10 """
+    random.seed()
     rating = random.randint(0, 10)
 
     if(rating == 0):
@@ -126,12 +131,6 @@ async def ratewaifu(waifu : str):
         await bot.say("I rate myself a 10! THE BEST, how dare you question me BAKA!")
     else:
         await bot.say("I rate your waifu: " + waifu + " a " + str(int(rating)) + ".")
-
-@bot.command()
-"""Makes a choice for the user"""
-async def choice(*options : str):
-    bot_option_choice = random.choice(options)
-    await bot.say("I'd choose " + bot_option_choice)
     
 """Bot execution using token"""
 bot.run('MTcxNTQ0NzI2MTU4MTgwMzU0.CsZ7hA.j8pERaIZY0SObQujX2C0Yyb8HIU')
