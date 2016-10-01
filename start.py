@@ -3,6 +3,8 @@ import discord
 from discord.ext import commands
 import logging
 import random
+import threading
+import time
 
 """Command Prefix"""
 bot = commands.Bot(command_prefix='!')
@@ -19,7 +21,44 @@ async def on_ready():
     """Called on bot done preparing data, NOT FIRST always"""
     print('Logged in as: ' + bot.user.name)
     print('Bot ID: ' + bot.user.id)
-    await bot.change_status(game=discord.Game(name='with Ram'))
+    bot.loop.create_task(pick_status())
+
+async def pick_status():
+    """Randomly generates a new status on duration"""
+    random.seed()
+    loop = asyncio.get_event_loop()
+    counter = 0
+    
+    while bot.is_logged_in:
+        status = random.choice(["with Rem",
+                                "with Ram",
+                                "with Emilia",
+                                "with Noumi Kudryavka",
+                                "with Illya",
+                                "with Chitoge",
+                                "with Yoshino",
+                                "with Arisu Shimada",
+                                "with Shirokuma",
+                                "with Karen",
+                                "with Kyon's Sister",
+                                "with Est",
+                                "with Aria Kanzaki",
+                                "with the Nep Sisters",
+                                "with Chino",
+                                "with Kyouko",
+                                "with Konata",
+                                "with Enju",
+                                "with Kirin Toudou",
+                                "with Shinobu",
+                                "with Megumin",
+                                "with Mikan",
+                                "with kazu", # yaya
+                                "with Indekkusu"])
+        
+        print("Loop Counter: " + str(int(counter)) + ",Picked a new status: " + status)
+        counter += 1
+        await bot.change_status(game=discord.Game(name=status))
+        await asyncio.sleep(12) # loops every 12 seconds
 
 @bot.command()
 async def rtd(min_number : str ,max_number: str):
@@ -88,7 +127,7 @@ async def ratewaifu(waifu : str):
         await bot.say("I rate your waifu: " + waifu + " a " + str(int(rating)) + ". Serves you right for picking her BAKA!")
     elif(rating == 10):
         await bot.say("I rate your waifu: " + waifu + " a " + str(int(rating)) + ". She.. isn't that good, b-b-BAKA!")
-    elif(waifu == bot.user.name)
+    elif(waifu == bot.user.name):
         await bot.say("I rate myself a 10! THE BEST, how dare you question me BAKA!")
     else:
         await bot.say("I rate your waifu: " + waifu + " a " + str(int(rating)) + ".")
