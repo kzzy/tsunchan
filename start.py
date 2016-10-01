@@ -39,7 +39,6 @@ async def rps(user_hand : str):
     """ Rock Paper Scissors function, takes in string
         Easter Egg: はさみ For User Scissors in JP """
     random.seed()
-    
     bot_choice = random.choice(["rock","paper","scissors"])
     
     if user_hand == "rock" or user_hand == "paper" or user_hand == "scissors" or user_hand == "はさみ":
@@ -71,11 +70,28 @@ async def rps(user_hand : str):
 
 @bot.command()
 async def coin():
+    """ Flips a coin"""
     random.seed()
     bot_coin = random.choice(["heads", "tails"])
+    
     await bot.say("You want me to flip you a coin? That's it?")
     await bot.say("*flips*")
     await bot.say("The coin lands as " + bot_coin)
+
+@bot.command()
+async def ratewaifu(waifu : str):
+    """ Rates the given waifu from 1-10 """
+    random.seed()
+    rating = random.randint(0, 10)
+
+    if(rating == 0):
+        await bot.say("I rate your waifu: " + waifu + " a " + str(int(rating)) + ". Serves you right for picking her BAKA!")
+    elif(rating == 10):
+        await bot.say("I rate your waifu: " + waifu + " a " + str(int(rating)) + ". She.. isn't that good, b-b-BAKA!")
+    elif(waifu == bot.user.name):
+        await bot.say("I rate myself a 10! THE BEST, how dare you question me BAKA!")
+    else:
+        await bot.say("I rate your waifu: " + waifu + " a " + str(int(rating)) + ".")
     
 """Bot execution using token"""
 bot.run('MTcxNTQ0NzI2MTU4MTgwMzU0.CsZ7hA.j8pERaIZY0SObQujX2C0Yyb8HIU')
