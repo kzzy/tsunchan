@@ -25,7 +25,6 @@ async def on_ready():
 
 async def pick_status():
     """Randomly generates a new status on duration"""
-    random.seed()
     loop = asyncio.get_event_loop()
     counter = 0
     
