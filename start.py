@@ -11,7 +11,7 @@ bot = commands.Bot(command_prefix='!')
 
 # LOGGING 
 logger = logging.getLogger('discord')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG) #Settings: DEBUG, WARNING, REFER TO DOCS
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
@@ -52,7 +52,7 @@ async def pick_status():
                                 "with Shinobu",
                                 "with Megumin",
                                 "with Mikan",
-                                #"with kazu", # yaya no
+                                "with kazu", # yaya no
                                 "with Indekkusu"])
         
         print("Loop Counter: " + str(int(counter)) + ",Picked a new status: " + status)
