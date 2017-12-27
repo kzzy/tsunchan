@@ -3,8 +3,13 @@ import discord
 from discord.ext import commands
 import logging
 import random
-import threading
-import time
+import subprocess
+import re
+
+""" NOTES """
+# Documentation: http://discordpy.readthedocs.io/
+# Replaced Deprecated function change_status with change_presence
+# Coded server region automatic swapping based on lowest ping
 
 """Command Prefix"""
 bot = commands.Bot(command_prefix='!')
@@ -21,11 +26,92 @@ async def on_ready():
     """Called on bot done preparing data, NOT FIRST always"""
     print('Logged in as: ' + bot.user.name)
     print('Bot ID: ' + bot.user.id)
-    bot.loop.create_task(pick_status())
+    bot.loop.create_task(pick_status())     # Status Rotation
+    bot.loop.create_task(ping())            # Ping to current server monitor
+
+def check_ping(ip):
+    avg_ping = 0.0
+    ping_command = "ping -n -c 5 -W 3 " + ip
+
+    (output, error) = subprocess.Popen(ping_command,
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE,
+                                       shell=True).communicate()
+
+    # Regex to parse the decoded byte input into string
+    pattern = r'time=([0-9]+(\.[0-9]+)*)'
+    pings = re.findall(pattern, output.decode('utf=8'))
+
+    # Calculate Average ping
+    for ping in pings:
+        avg_ping += float(ping[0])
+    avg_ping = avg_ping/5
+
+    return avg_ping
+
+async def ping():
+    region_dict = {}
+    region_dict['us-west'] = 0.0
+    region_dict['us-central'] = 0.0
+    region_dict['us-east'] = 0.0
+
+    # Default Server Location : us-west
+    current_region = "us-west"
+    id = "131339092830060544"  # The Crew server id MUST BE STRING FORMAT
+    server = bot.get_server(id)
+    await bot.edit_server(server, region=discord.ServerRegion(current_region))
+
+    while bot.is_logged_in:
+        avg_west = check_ping("45.35.39.162") # WEST 144
+        avg_central = check_ping("104.200.145.226") # CENTRAL 165
+        avg_east = check_ping("138.128.21.106") # EAST 119
+
+        # Update existing ping values
+        region_dict['us-west'] = avg_west
+        region_dict['us-central'] = avg_central
+        region_dict['us-east'] = avg_east
+
+        print("Current West Average:{0}".format(avg_west))
+        print("Current Central Average:{0}".format(avg_central))
+        print("Current East Average:{0}".format(avg_east))
+
+        #for key,value in region_dict.items():
+        #    print(key,value)
+
+        # Determine region with lowest ping and change server region if it does not match the current region
+        min_region = min(region_dict.items(), key=lambda x: x[1])[0]
+        if min_region != current_region:
+            print("Region changed from {0} to {1}".format(current_region, min_region))
+            await bot.edit_server(server, region=discord.ServerRegion(min_region))
+        await asyncio.sleep(30) # loops every 30 seconds
+
+@bot.command()
+async def test(newRegion : str):
+    id = "131339092830060544"  # The Crew server id MUST BE STRING FORMAT
+    server = bot.get_server(id)
+    # Server ID validity check
+    if server is None:
+        await bot.say('Invalid Server ID provided')
+        return
+
+    # Compose all regions into a list
+    regions = [region.value for region in discord.ServerRegion]
+    print(regions)
+
+    # Parameter check for input validity
+    if newRegion not in regions:
+        print("{0} is not a valid server region".format(newRegion))
+        return
+
+    try:
+        await bot.edit_server(server, region=discord.ServerRegion(newRegion))
+        await bot.say("Successfully changed the Server Region to {0}".format(newRegion))
+    except Exception:
+        await bot.say("Failed to change Server Region to {0}".format(newRegion))
+    return
 
 async def pick_status():
     """Randomly generates a new status on duration"""
-    loop = asyncio.get_event_loop()
     counter = 0
     
     while bot.is_logged_in:
@@ -56,7 +142,7 @@ async def pick_status():
         
         print("Loop Counter: " + str(int(counter)) + ",Picked a new status: " + status)
         counter += 1
-        await bot.change_status(game=discord.Game(name=status))
+        await bot.change_presence(game=discord.Game(name=status, type=1), status=discord.Status.online)
         await asyncio.sleep(12) # loops every 12 seconds
 
 @bot.command()
