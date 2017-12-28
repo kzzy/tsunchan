@@ -3,6 +3,7 @@ import discord
 from discord.ext import commands
 import logging
 import random
+import sys
 import subprocess
 import re
 
@@ -18,8 +19,22 @@ bot = commands.Bot(command_prefix='!')
 logger = logging.getLogger('discord')
 logger.setLevel(logging.DEBUG) #Settings: DEBUG, WARNING, REFER TO DOCS
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
-handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+formatter = logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s')
+handler.setFormatter(formatter)
 logger.addHandler(handler)
+
+"""Global Variables"""
+inhouse_active = False # Boolean Used for !inhouse series of commands
+inhouse_started = False # Boolean Used to check for in-progress inhouse sessions
+inhouse_ready = False # Ready state once total players are met
+inhouse_game = ""
+inhouse_players = [] # List for !inhouse players
+inhouse_current = 0 # Current amount of players
+inhouse_total = 0 # Total amount players
+inhouse_t1 = [] # List for Team 1 players
+inhouse_t2 = [] # List for Team 2 players
+inhouse_t1_slots = 0 # Team 1 total slots
+inhouse_t2_slots = 0 # Team 2 total slots
 
 @bot.event
 async def on_ready():
@@ -59,7 +74,7 @@ async def ping():
     current_region = "us-west"
     id = "131339092830060544"  # The Crew server id MUST BE STRING FORMAT
     server = bot.get_server(id)
-    await bot.edit_server(server, region=discord.ServerRegion(current_region))
+    #await bot.edit_server(server, region=discord.ServerRegion(current_region))
 
     while bot.is_logged_in:
         avg_west = check_ping("45.35.39.162") # WEST 144
@@ -71,44 +86,282 @@ async def ping():
         region_dict['us-central'] = avg_central
         region_dict['us-east'] = avg_east
 
-        print("Current West Average:{0}".format(avg_west))
-        print("Current Central Average:{0}".format(avg_central))
-        print("Current East Average:{0}".format(avg_east))
-
-        #for key,value in region_dict.items():
-        #    print(key,value)
+        # Print to log file
+        logger.info("Current West Average:{0}".format(avg_west))
+        logger.info("Current Central Average:{0}".format(avg_central))
+        logger.info("Current East Average:{0}".format(avg_east))
 
         # Determine region with lowest ping and change server region if it does not match the current region
         min_region = min(region_dict.items(), key=lambda x: x[1])[0]
         if min_region != current_region:
-            print("Region changed from {0} to {1}".format(current_region, min_region))
+            logger.info("Region changed from {0} to {1}".format(current_region, min_region))
             await bot.edit_server(server, region=discord.ServerRegion(min_region))
         await asyncio.sleep(30) # loops every 30 seconds
 
-@bot.command()
-async def test(newRegion : str):
-    id = "131339092830060544"  # The Crew server id MUST BE STRING FORMAT
-    server = bot.get_server(id)
-    # Server ID validity check
-    if server is None:
-        await bot.say('Invalid Server ID provided')
+def check_role(member, target):
+    """ Validate given member with given target role"""
+    for role in member.roles:
+        if str(role) == target:
+            return True
+    return False
+
+@bot.group(pass_context=True)
+async def inhouse(ctx):
+    # Role Check
+    member = ctx.message.author     # Fetch author user and permissions
+    if check_role(member, "Inhouse") is False:
+        await bot.say('You do not have the proper permissions to join/manage the inhouse')
         return
 
-    # Compose all regions into a list
-    regions = [region.value for region in discord.ServerRegion]
-    print(regions)
-
-    # Parameter check for input validity
-    if newRegion not in regions:
-        print("{0} is not a valid server region".format(newRegion))
-        return
-
-    try:
-        await bot.edit_server(server, region=discord.ServerRegion(newRegion))
-        await bot.say("Successfully changed the Server Region to {0}".format(newRegion))
-    except Exception:
-        await bot.say("Failed to change Server Region to {0}".format(newRegion))
+    # Validate subcommand usage
+    if ctx.invoked_subcommand is None:
+        await bot.say('Invalid inhouse command\nPlease refer to **!help inhouse**')
     return
+
+@inhouse.command(pass_context=True)
+async def init(ctx, game: str, t1_slots: str, t2_slots: str):
+    """Initializes an inhouse session"""
+    global inhouse_active
+    global inhouse_total
+    global inhouse_t1_slots
+    global inhouse_t2_slots
+    global inhouse_game
+
+    # Parameter Check
+    if int(t1_slots) < 1 or int(t2_slots) < 1:
+        await bot.say("The team numbers are illegal, must be > 0")
+        return
+
+    # Role Check
+    member = ctx.message.author     # Fetch author user and permissions
+    if check_role(member, "Inhouse") is False:
+        return
+
+    # Check for active inhouse
+    if inhouse_active is True:
+        await bot.say("There is an active inhouse already. [Game: **{0}**]".format(inhouse_game))
+        return
+
+    inhouse_active = True
+    inhouse_game = game
+    inhouse_t1_slots = t1_slots
+    inhouse_t2_slots = t2_slots
+    inhouse_total = int(t1_slots) + int(t2_slots)
+
+    await bot.say('**{0}** has started an inhouse.\n`{1}   [{2} VS {3}]`'.format(member.display_name, inhouse_game, t1_slots, t2_slots))
+    return
+
+@inhouse.command(pass_context=True)
+async def finish(ctx):
+    """Concludes an inhouse session"""
+    global inhouse_active
+    global inhouse_started
+    global inhouse_ready
+    global inhouse_current
+    global inhouse_total
+    global inhouse_players
+    global inhouse_t1_slots
+    global inhouse_t2_slots
+    global inhouse_game
+
+    # Role Check
+    member = ctx.message.author     # Fetch author user and permissions
+    if check_role(member, "Inhouse") is False:
+        return
+
+    if inhouse_active is True:
+        # Reset variables
+        inhouse_active = False
+        inhouse_started = False
+        inhouse_ready = False
+        inhouse_current = 0
+        inhouse_total = 0
+        inhouse_t1_slots = 0
+        inhouse_t2_slots = 0
+        inhouse_game = ""
+        del inhouse_players[:] # Delete current list of players
+        del inhouse_t1[:]
+        del inhouse_t2[:]
+        await bot.say('The current inhouse session ended.')
+    else:
+        await bot.say('There is no active inhouse currently going.\nPlease refer to **!help inhouse**')
+    return
+
+@inhouse.command(pass_context=True)
+async def start(ctx):
+    """Starts a match"""
+    global inhouse_active
+    global inhouse_started
+    global inhouse_ready
+    global inhouse_players
+
+    # Role Check
+    member = ctx.message.author     # Fetch author user and permissions
+    if check_role(member, "Inhouse") is False:
+        return
+
+    # Check for active inhouse
+    if inhouse_active is False:
+        await bot.say('There is no active inhouse currently going.\nPlease refer to **!help inhouse**')
+        return
+
+    # Check if inhouse is full and ready to go
+    if inhouse_ready is False:
+        await bot.say('There are not enough players in the queue.')
+        return
+
+    # Check if there is an inhouse in-progress
+    if inhouse_started is True:
+        await bot.say('There is an inhouse in-progress. Please wait until it\'s done.')
+        return
+
+    cur_t1_slots = 0
+    cur_t2_slots = 0
+    ih_channel_1 = bot.get_channel("346601499037663252") # Inhouse ch1
+    ih_channel_2 = bot.get_channel("346603193163317249") # Inhouse ch2
+    inhouse_started = True
+
+    # While there are still players not on any teams
+    while inhouse_players:
+        # Random players onto team 1 and once full, throw rest into team 2
+        randy = random.choice(inhouse_players)
+        inhouse_players.remove(randy)
+        inhouse_t1.append(randy)
+        cur_t1_slots += 1
+
+        # Enough players on team 1
+        if cur_t1_slots == int(inhouse_t1_slots):
+
+            # Fill rest players into team 2
+            while inhouse_players:
+                inhouse_t2.append(inhouse_players.pop())
+            cur_t2_slots = inhouse_total - cur_t1_slots
+
+    # Print team rosters
+    t1_roster = ','.join(str(x.display_name) for x in inhouse_t1)
+    t2_roster = ','.join(str(x.display_name) for x in inhouse_t2)
+    await bot.say("**TEAM 1:** {0}\n\n**TEAM 2:** {1}".format(t1_roster, t2_roster))
+
+    # Move players into their respective inhouse voice channels
+    for player in inhouse_t1:
+        await bot.move_member(player, ih_channel_1)
+    for player in inhouse_t2:
+        await bot.move_member(player, ih_channel_2)
+    return
+
+@inhouse.command(pass_context=True)
+async def end(ctx):
+    """Concludes a match"""
+    global inhouse_active
+    global inhouse_started
+    global inhouse_ready
+    global inhouse_players
+
+    # Role Check
+    member = ctx.message.author  # Fetch author user and permissions
+    if check_role(member, "Inhouse") is False:
+        return
+
+    # Check for active inhouse
+    if inhouse_active is False:
+        await bot.say('There is no active inhouse currently going.\nPlease refer to **!help inhouse**')
+        return
+
+    # Check if there is an inhouse in-progress
+    if inhouse_started is False:
+        await bot.say('There is no inhouse in-progress currently.')
+        return
+
+    # Check if inhouse is full and ready to go
+    if inhouse_ready is False:
+        await bot.say('There are not enough players ready.')
+        return
+
+    inhouse_started = False
+    # Move members back to the main lobby channel
+    ih_lobby_channel = bot.get_channel("321826783173410826") # nyaa.si
+    for player in inhouse_t1:
+        await bot.move_member(player, ih_lobby_channel)
+    for player in inhouse_t2:
+        await bot.move_member(player, ih_lobby_channel)
+
+    # Reset team 1 and team 2 rosters
+    while inhouse_t1:
+        inhouse_players.append(inhouse_t1.pop())
+    while inhouse_t2:
+        inhouse_players.append(inhouse_t2.pop())
+
+    await bot.say('`Ended Inhouse session`')
+    return
+
+@inhouse.command(pass_context=True)
+async def join(ctx):
+    """Joins the queue for the inhouse"""
+    global inhouse_players
+    global inhouse_current
+
+    # Role Check
+    member = ctx.message.author     # Fetch author user and permissions
+    if check_role(member, "Inhouse") is False:
+        return
+
+    # Check if readied already
+    if member in inhouse_players:
+        await bot.say('{0} has already joined this queue.'.format(member.display_name))
+        return
+
+    # Check for active inhouse
+    if inhouse_active is False:
+        await bot.say('There is no active inhouse currently going.\nPlease refer to **!help inhouse**')
+        return
+
+    # Check if inhouse is already full
+    if(inhouse_current == inhouse_total):
+        await bot.say("Sorry the inhouse is currently full. Baka!")
+        return
+
+    # Update player list and counters
+    inhouse_players.append(member)
+    inhouse_current += 1
+
+    await bot.say('**{0}** has joined the queue, [{1} / {2}] players remaining'.format(member.display_name, inhouse_current, inhouse_total))
+
+    # Check for if enough players have ready'd post-addition
+    if(inhouse_current == inhouse_total):
+        global inhouse_ready
+        inhouse_ready = True
+        await bot.say('`Inhouse is ready to commence\nWhoever the mod is, type in \'!inhouse start\' to begin`'.format(inhouse_current, inhouse_total))
+
+@inhouse.command(pass_context=True)
+async def unjoin(ctx):
+    """Leaves the queue for the inhouse"""
+    global inhouse_ready
+    global inhouse_players
+    global inhouse_current
+
+    # Role Check
+    member = ctx.message.author     # Fetch author user and permissions
+    if check_role(member, "Inhouse") is False:
+        return
+
+    # Check if member readied originally
+    if member not in inhouse_players:
+        await bot.say('{0} never joined this queue in the first place.'.format(member.display_name))
+        return
+
+    # Check for active inhouse
+    if inhouse_active is False:
+        await bot.say('There is no active inhouse currently going.\nPlease refer to **!help inhouse**')
+        return
+
+    # Update player list and counters
+    inhouse_players.remove(member)
+    inhouse_current -= 1
+
+    await bot.say('**{0}** has left the queue, [{1} / {2}] players remaining'.format(member.display_name, inhouse_current, inhouse_total))
+
+    if inhouse_ready is True:
+        inhouse_ready = False
 
 async def pick_status():
     """Randomly generates a new status on duration"""
@@ -140,14 +393,14 @@ async def pick_status():
                                 "with kazu", # yaya no
                                 "with Indekkusu"])
         
-        print("Loop Counter: " + str(int(counter)) + ",Picked a new status: " + status)
+        logger.info("Loop Counter: " + str(int(counter)) + ",Picked a new status: " + status)
         counter += 1
         await bot.change_presence(game=discord.Game(name=status, type=1), status=discord.Status.online)
         await asyncio.sleep(12) # loops every 12 seconds
 
 @bot.command()
 async def rtd(min_number : str ,max_number: str):
-    """ Rolls the Dice function, takes in integers """  
+    """ Roll the Dice """
     try:
         dice_number = random.randint(int(str(min_number)), int(str(max_number)))
     except Exception:
@@ -158,7 +411,7 @@ async def rtd(min_number : str ,max_number: str):
 
 @bot.command()
 async def rps(user_hand : str):
-    """ Rock Paper Scissors function, takes in string
+    """ Rock Paper Scissors
         Easter Egg: はさみ For User Scissors in JP """
     bot_choice = random.choice(["rock","paper","scissors"])
     
@@ -191,7 +444,7 @@ async def rps(user_hand : str):
 
 @bot.command()
 async def coinflip():
-    """ Flips a coin"""
+    """ Flips a coin """
     bot_coin = random.choice(["heads", "tails"])
     
     await bot.say("You want me to flip you a coin? That's it?")
@@ -219,7 +472,8 @@ async def choice(*options : str):
     await bot.say("I'd choose " + bot_option_choice)
     
 """Bot execution using token"""
-bot.run('MTcxNTQ0NzI2MTU4MTgwMzU0.CsZ7hA.j8pERaIZY0SObQujX2C0Yyb8HIU')
+# NOTE: REMOVE TOKEN BEFORE COMMIT
+bot.run('')
 
     
     
