@@ -10,6 +10,8 @@ import re
 """ TO DO """
 # Rematch function
 # Captains mode [Manual pick of captains 1-2-2-1-1]
+# Revise init function auto-ready those already present in lobby channel
+# Revise inhouse to automatically exec next phase[start] when the final player readys
 
 """ HISTORY"""
 # Organized text outputs into a single print function
