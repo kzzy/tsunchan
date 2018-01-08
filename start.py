@@ -97,4 +97,4 @@ if __name__ == "__main__":
 
     """Bot execution using token"""
     # NOTE: REMOVE TOKEN BEFORE COMMIT
-    bot.run('MTcxNTQ0NzI2MTU4MTgwMzU0.DScMpQ.NwCkfhxfwrrve6m5SASQM_KA9A8')
+    bot.run('')
