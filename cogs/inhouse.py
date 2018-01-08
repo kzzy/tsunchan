@@ -226,7 +226,7 @@ class Inhouse:
 
         # Check if readied already
         if member in inhouse_players:
-            await self.print_ih('already_in_queue', member.display_name)
+            await self.bot.say(self.print_ih('already_in_queue', member.display_name))
             return
 
         # Check for active inhouse
