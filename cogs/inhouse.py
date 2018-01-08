@@ -31,95 +31,89 @@ class Inhouse:
                 return True
         return False
 
-
-    async def print_ih(self, instruct: str, input_1="", input_2="", input_3="", input_4=""):
+    def print_ih(self, instruct : str, input_1="", input_2="", input_3="", input_4=""):
         """ Helper Function to organize text printing"""
+        txt = ""
 
         if instruct == "teams":
             t1 = "TEAM 1"
             t2 = "TEAM 2"
-            await self.bot.say("`{:<35}{}`".format(t1, t2))
+            txt += "`{:<35}{}`".format(t1, t2)
+            txt += '\n'
             for player_t1, player_t2 in zip(inhouse_t1, inhouse_t2):
-                await self.bot.say("`{:<35}{}`".format(player_t1.display_name, player_t2.display_name))
+                txt += "`{:<35}{}`".format(player_t1.display_name, player_t2.display_name)
+                txt += '\n'
 
         elif instruct == "ready_help":
-            await self.bot.say(
-                "```Commands\n!inhouse move to start the match\n!inhouse scramble to randomize teams again.\n!inhouse swap <p1> <p2> to swap specific players.```")
+            txt += "```Commands\n!inhouse move to start the match\n!inhouse scramble to randomize teams again.\n!inhouse swap <p1> <p2> to swap specific players.```"
 
         elif instruct == "help":
-            await self.bot.say('Invalid inhouse command\nPlease refer to **!help inhouse**')
+            txt += 'Invalid inhouse command\nPlease refer to **!help inhouse**'
 
         elif instruct == "improper_permissions":
-            await self.bot.say('You do not have the proper permissions to join/manage the inhouse')
+            txt += 'You do not have the proper permissions to join/manage the inhouse'
 
         elif instruct == "inactive_inhouse":
-            await self.bot.say('There is no active inhouse currently going.\nPlease refer to **!help inhouse**')
+            txt += 'There is no active inhouse currently going.\nPlease refer to **!help inhouse**'
 
         elif instruct == "init_inhouse":
-            await self.bot.say(
-                '**{0}** has started an inhouse.\n```{1}\t({2} VS {3})```'.format(input_1, input_2, input_3, input_4))
+            txt += '**{0}** has started an inhouse.\n```{1}\t({2} VS {3})```'.format(input_1, input_2, input_3, input_4)
 
         elif instruct == "commence_inhouse":
-            await self.bot.say('**Inhouse is ready to commence**\n\n`Type in \'!inhouse start\' to begin`')
+            txt += '**Inhouse is ready to commence**\n\n`Type in \'!inhouse start\' to begin`'
 
         elif instruct == "inprogress_inhouse":
-            await self.bot.say('There is an inhouse in-progress. Please wait until it\'s done.')
+            txt += 'There is an inhouse in-progress. Please wait until it\'s done.'
 
         elif instruct == "no_inprogress_inhouse":
-            await self.bot.say('There is no inhouse in-progress.')
+            txt += 'There is no inhouse in-progress.'
 
         elif instruct == "end_match":
-            await self.bot.say('The current match has ended... Moving players back to the Lobby')
+            txt += 'The current match has ended... Moving players back to the Lobby'
 
         elif instruct == "not_enough_queue":
-            await self.bot.say('There are not enough players in the queue.')
+            txt += 'There are not enough players in the queue.'
 
         elif instruct == "full_inhouse":
-            await self.bot.say('Sorry the inhouse is currently full. Baka!')
+            txt += 'Sorry the inhouse is currently full. Baka!'
 
         elif instruct == "end_inhouse":
-            await self.bot.say('The current inhouse session ended.')
+            txt += 'The current inhouse session ended.'
 
         elif instruct == "not_found":
-            await self.bot.say("There are no players found with your search key: **{0}**".format(input_1))
+            txt += "There are no players found with your search key: **{0}**".format(input_1)
 
         # Unique Cases #
         elif instruct == "init_illegal_team_slots":
-            await self.bot.say("The team numbers are illegal, must be > 0")
+            txt += "The team numbers are illegal, must be > 0"
 
         elif instruct == "swap_too_many_cases":
-            await self.bot.say(
-                "There are numerous players with the same names in Team 1. (**{0}**)\nRefine your search, then try again.".format(
-                    input_1))
+            txt += "There are numerous players with the same names in Team 1. (**{0}**)\nRefine your search, then try again.".format(input_1)
 
         elif instruct == "swap_result":
-            await self.bot.say("Swapped Players: **{0}** and **{1}**".format(input_1, input_2))
+            txt += "Swapped Players: **{0}** and **{1}**".format(input_1, input_2)
 
         elif instruct == "scramble":
-            await self.bot.say('{0} has scrambled the teams! The new teams are below.\n'.format(input_1))
+            txt += '{0} has scrambled the teams! The new teams are below.\n'.format(input_1)
 
         elif instruct == "join_queue":
-            await self.bot.say('**{0}** has joined the queue, [{1} / {2}] players needed'.format(input_1, input_2, input_3))
+            txt += '**{0}** has joined the queue, [{1} / {2}] players needed'.format(input_1, input_2, input_3)
 
         elif instruct == "leave_queue_too_many_cases":
-            await self.bot.say(
-                'There are numerous players with the same names in the queue. (**{0}**)\nRefine your search, then try again.'.format(
-                    input_1))
+            txt += 'There are numerous players with the same names in the queue. (**{0}**)\nRefine your search, then try again.'.format(input_1)
 
         elif instruct == "leave_queue":
-            await self.bot.say('**{0}** has left the queue, [{1} / {2}] players needed'.format(input_1, input_2, input_3))
+            txt += '**{0}** has left the queue, [{1} / {2}] players needed'.format(input_1, input_2, input_3)
 
         elif instruct == "leave_queue_auto":
-            await self.bot.say(
-                '**{0}** has automatically left the queue, [{1} / {2}] players needed\n`Left the inhouse channels`'.format(
-                    input_1, input_2, input_3))
+            txt += '**{0}** has automatically left the queue, [{1} / {2}] players needed\n`Left the inhouse channels`'.format(input_1, input_2, input_3)
 
         elif instruct == "already_in_queue":
-            await self.bot.say('{0} has already joined this queue.'.format(input_1))
+            txt += '{0} has already joined this queue.'.format(input_1)
 
         elif instruct == "not_in_queue":
-            await self.bot.say('{0} never joined the queue in the first place.'.format(input_1))
-
+            txt += '{0} never joined the queue in the first place.'.format(input_1)
+        return txt
 
     @commands.group(pass_context=True)
     async def inhouse(self, ctx):
@@ -127,14 +121,13 @@ class Inhouse:
         # Role Check
         member = ctx.message.author  # Fetch author user and permissions
         if self.check_role(member, "Inhouse") is False:
-            await self.print_ih("improper_permissions")
+            await self.bot.say(self.print_ih("improper_permissions"))
             return
 
         # Validate subcommand usage
         if ctx.invoked_subcommand is None:
-            await self.print_ih("help")
+            await self.bot.say(self.print_ih("help"))
         return
-
 
     @inhouse.command(pass_context=True)
     async def init(self, ctx, game: str, t1_slots: str, t2_slots: str):
@@ -147,7 +140,7 @@ class Inhouse:
 
         # Parameter Check
         if int(t1_slots) < 1 or int(t2_slots) < 1:
-            await self.print_ih('init_illegal_team_slots')
+            await self.bot.say(self.print_ih('init_illegal_team_slots'))
             return
 
         # Role Check
@@ -157,7 +150,7 @@ class Inhouse:
 
         # Check for active inhouse
         if inhouse_active is True:
-            await self.print_ih('inactive_inhouse')
+            await self.bot.say(self.print_ih('inactive_inhouse'))
             return
 
         inhouse_active = True
@@ -166,9 +159,364 @@ class Inhouse:
         inhouse_t2_slots = t2_slots
         inhouse_total = int(t1_slots) + int(t2_slots)
 
-        await self.print_ih('init_inhouse', member.display_name, inhouse_game, t1_slots, t2_slots)
-        return
+        await self.bot.say(self.print_ih('init_inhouse', member.display_name, inhouse_game, t1_slots, t2_slots))
 
+    @inhouse.command(pass_context=True)
+    async def start(self, ctx):
+        """Starts a match"""
+        global inhouse_active
+        global inhouse_started
+        global inhouse_ready
+        global inhouse_players
+
+        # Role Check
+        member = ctx.message.author  # Fetch author user and permissions
+        if self.check_role(member, "Inhouse") is False:
+            return
+
+        # Check for active inhouse
+        if inhouse_active is False:
+            await self.bot.say(self.print_ih('inactive_inhouse'))
+            return
+
+        # Check if inhouse is full and ready to go
+        if inhouse_ready is False:
+            await self.bot.say(self.print_ih('not_enough_queue'))
+            return
+
+        # Check if there is an inhouse in-progress
+        if inhouse_started is True:
+            await self.bot.say(self.print_ih('inprogress_inhouse'))
+            return
+
+        cur_t1_slots = 0
+        inhouse_started = True
+
+        # While there are still players not on any teams
+        while inhouse_players:
+            # Random players onto team 1 and once full, throw rest into team 2
+            randy = random.choice(inhouse_players)
+            inhouse_players.remove(randy)
+            inhouse_t1.append(randy)
+            cur_t1_slots += 1
+
+            # Enough players on team 1
+            if cur_t1_slots == int(inhouse_t1_slots):
+
+                # Fill rest players into team 2
+                while inhouse_players:
+                    inhouse_t2.append(inhouse_players.pop())
+
+        # Print team rosters
+        #  Sort alphabetically
+        inhouse_t1.sort(key=lambda x: x.display_name)
+        inhouse_t2.sort(key=lambda x: x.display_name)
+        await self.bot.say(self.print_ih("ready_help") + '\n' + self.print_ih("teams"))
+
+    @inhouse.command(pass_context=True)
+    async def join(self, ctx):
+        """Joins the queue"""
+        global inhouse_players
+        global inhouse_current
+
+        # Role Check
+        member = ctx.message.author  # Fetch author user and permissions
+        if self.check_role(member, "Inhouse") is False:
+            return
+
+        # Check if readied already
+        if member in inhouse_players:
+            await self.print_ih('already_in_queue', member.display_name)
+            return
+
+        # Check for active inhouse
+        if inhouse_active is False:
+            await self.bot.say(self.print_ih('inactive_inhouse'))
+            return
+
+        # Check if inhouse is already full
+        if (inhouse_current == inhouse_total):
+            await self.bot.say(self.print_ih('full_inhouse'))
+            return
+
+        # Update player list and counters
+        inhouse_players.append(member)
+        inhouse_current += 1
+
+        # Check for if enough players have ready'd post-addition
+        if (inhouse_current == inhouse_total):
+            global inhouse_ready
+            inhouse_ready = True
+            await self.bot.say(self.print_ih('join_queue', member.display_name, inhouse_current, inhouse_total) + '\n' + self.print_ih("commence_inhouse"))
+        else:
+            await self.bot.say(self.print_ih('join_queue', member.display_name, inhouse_current, inhouse_total))
+
+    @inhouse.command(pass_context=True)
+    async def unjoin(self, ctx, player=None):
+        """Leaves the queue"""
+        global inhouse_ready
+        global inhouse_players
+        global inhouse_current
+
+        # Role Check
+        member = ctx.message.author  # Fetch author user and permissions
+        if self.check_role(member, "Inhouse") is False:
+            return
+
+        # Find player if optional arg is given #
+        if player is not None:
+            target = ""
+            # Regex to match all found names for team 1
+            player_pattern = r'((' + re.escape(player.lower()) + r')+(.)*)'
+            matches = [x for x, x in enumerate(inhouse_players) if re.search(player_pattern, x.display_name.lower())]
+
+            # Return first player match of exact string
+            for x in matches:
+                if x.display_name.lower() == player.lower() or len(matches) == 1:
+                    target = x
+                    break
+
+            # If numerous matches, but no name exactly matches the given string
+            if len(matches) > 1 and not target:
+                dupe = ','.join(str(x.display_name) for x in matches)
+                await self.bot.say(self.print_ih('leave_queue_too_many_cases', dupe))
+                return
+            elif len(matches) < 1:
+                await self.bot.say(self.print_ih('not_found', player))
+                return
+
+            # Set player to actual member object if pass all checks
+            player = target
+
+        # Check if member readied originally
+        if member not in inhouse_players and player is None:
+            await self.bot.say(self.print_ih('not_in_queue', member.display_name))
+            return
+
+        # Check for active inhouse
+        if inhouse_active is False:
+            await self.bot.say(self.print_ih('inactive_inhouse'))
+            return
+
+        # Update player list and counters
+        inhouse_current -= 1
+        if player is not None:
+            inhouse_players.remove(player)
+            await self.bot.say(self.print_ih('leave_queue', player.display_name, inhouse_current, inhouse_total))
+        else:
+            inhouse_players.remove(member)
+            await self.bot.say(self.print_ih('leave_queue', member.display_name, inhouse_current, inhouse_total))
+
+        # Update inhouse status
+        if inhouse_ready is True:
+            inhouse_ready = False
+
+    @inhouse.command(pass_context=True)
+    async def swap(self, ctx, t1_name: str, t2_name: str):
+        """Swaps two players"""
+        global inhouse_t1
+        global inhouse_t2
+
+        # Role Check
+        member = ctx.message.author  # Fetch author user and permissions
+        if self.check_role(member, "Inhouse") is False:
+            return
+
+        # Check for active inhouse
+        if inhouse_active is False:
+            await self.bot.say(self.print_ih('inactive_inhouse'))
+            return
+
+        # Check if inhouse is full and ready to go
+        if inhouse_ready is False:
+            await self.bot.say(self.print_ih('not_enough_queue'))
+            return
+
+        # Check if there is an inhouse in-progress
+        if inhouse_started is False:
+            await self.bot.say(self.print_ih('no_inprogress_inhouse'))
+            return
+
+        # Find Team 1 PLAYER #
+        t1_player = None  # Team 1 Target Player
+        # Regex to match all found names for team 1
+        p1_pattern = r'((' + re.escape(t1_name.lower()) + r')+(.)*)'
+        t1_matches = [x for x, x in enumerate(inhouse_t1) if re.search(p1_pattern, x.display_name.lower())]
+
+        # Return first player match of exact string
+        for x in t1_matches:
+            if x.display_name.lower() == t1_name.lower() or len(t1_matches) == 1:
+                t1_player = x
+                break
+
+        # If numerous matches, but no name exactly matches the given string
+        if len(t1_matches) > 1 and t1_player is None:
+            t1_dupe = ','.join(str(x.display_name) for x in t1_matches)
+            await self.bot.say(self.print_ih('swap_too_many_cases', t1_dupe))
+            return
+        elif len(t1_matches) < 1:
+            await self.bot.say(self.print_ih('not_found', t1_name))
+            return
+
+        # Find Team 2 PLAYER #
+        t2_player = None  # Team 2 Target Player
+        # Regex to match all found names for team 2
+        p2_pattern = r'((' + re.escape(t2_name.lower()) + r')+(.)*)'
+        t2_matches = [x for x, x in enumerate(inhouse_t2) if re.search(p2_pattern, x.display_name.lower())]
+
+        # Return first player match of exact string
+        for x in t2_matches:
+            if x.display_name.lower() == t2_name.lower() or len(t2_matches) == 1:
+                t2_player = x
+                break
+
+        # If numerous matches, but no name exactly matches the given string
+        if len(t2_matches) > 1 and t2_player is None:
+            t2_dupe = ','.join(str(x.display_name) for x in t2_matches)
+            await self.bot.say(self.print_ih('swap_too_many_cases', t2_dupe))
+            return
+        elif len(t2_matches) < 1:
+            await self.bot.say(self.print_ih('not_found', t2_name))
+            return
+
+        # Swap respective players and print new teams
+        if t1_player is not None and t2_player is not None:
+            p1_index = inhouse_t1.index(t1_player)
+            p2_index = inhouse_t2.index(t2_player)
+
+            inhouse_t2.append(inhouse_t1.pop(p1_index))
+            inhouse_t1.append(inhouse_t2.pop(p2_index))
+
+            # Print updated teams
+            inhouse_t1.sort()  # Sort alphabetically
+            inhouse_t2.sort()
+            await self.bot.say(self.print_ih('ready_help')+'\n'+self.print_ih('swap_result', t1_player.display_name, t2_player.display_name)+'\n\n'+self.print_ih('teams'))
+
+    @inhouse.command(pass_context=True)
+    async def move(self, ctx):
+        """Moves teams"""
+        # Role Check
+        member = ctx.message.author  # Fetch author user and permissions
+        if self.check_role(member, "Inhouse") is False:
+            return
+
+        # Check for active inhouse
+        if inhouse_active is False:
+            await self.bot.say(self.print_ih('inactive_inhouse'))
+            return
+
+        # Check if inhouse is full and ready to go
+        if inhouse_ready is False:
+            await self.bot.say(self.print_ih('not_enough_queue'))
+            return
+
+        # Check if there is an inhouse in-progress
+        if inhouse_started is False:
+            await self.bot.say(self.print_ih('no_inprogress_inhouse'))
+            return
+
+        # Move players into their respective inhouse voice channels
+        for player in inhouse_t1:
+            await self.bot.move_member(player, self.bot.get_channel(inhouse_channels.get("Channel 1")))
+        for player in inhouse_t2:
+            await self.bot.move_member(player, self.bot.get_channel(inhouse_channels.get("Channel 2")))
+
+
+    @inhouse.command(pass_context=True)
+    async def scramble(self, ctx):
+        """Scrambles teams"""
+
+        # Role Check
+        member = ctx.message.author  # Fetch author user and permissions
+        if self.check_role(member, "Inhouse") is False:
+            return
+
+        # Check for active inhouse
+        if inhouse_active is False:
+            await self.bot.say(self.print_ih('inactive_inhouse'))
+            return
+
+        # Check if inhouse is full and ready to go
+        if inhouse_ready is False:
+            await self.bot.say(self.print_ih('not_enough_queue'))
+            return
+
+        # Check if there is an inhouse in-progress
+        if inhouse_started is False:
+            await self.bot.say(self.print_ih('no_inprogress_inhouse'))
+            return
+
+        cur_t1_slots = 0
+
+        # Reset team 1 and team 2 rosters
+        while inhouse_t1:
+            inhouse_players.append(inhouse_t1.pop())
+        while inhouse_t2:
+            inhouse_players.append(inhouse_t2.pop())
+
+        # While there are still players not on any teams
+        while inhouse_players:
+            # Random players onto team 1 and once full, throw rest into team 2
+            randy = random.choice(inhouse_players)
+            inhouse_players.remove(randy)
+            inhouse_t1.append(randy)
+            cur_t1_slots += 1
+
+            # Enough players on team 1
+            if cur_t1_slots == int(inhouse_t1_slots):
+
+                # Fill rest players into team 2
+                while inhouse_players:
+                    inhouse_t2.append(inhouse_players.pop())
+
+        # Print team rosters
+        inhouse_t1.sort()  # Sort alphabetically
+        inhouse_t2.sort()
+        await self.bot.say(self.print_ih('scramble', member.display_name) + '\n' + self.print_ih('ready_help') + '\n' + self.print_ih("teams"))
+
+    @inhouse.command(pass_context=True)
+    async def end(self, ctx):
+        """Concludes a match"""
+
+        global inhouse_active
+        global inhouse_started
+        global inhouse_ready
+        global inhouse_players
+
+        # Role Check
+        member = ctx.message.author  # Fetch author user and permissions
+        if self.check_role(member, "Inhouse") is False:
+            return
+
+        # Check for active inhouse
+        if inhouse_active is False:
+            await self.bot.say(self.print_ih('inactive_inhouse'))
+            return
+
+        # Check if there is an inhouse in-progress
+        if inhouse_started is False:
+            await self.bot.say(self.print_ih('no_inprogress_inhouse'))
+            return
+
+        # Check if inhouse is full and ready to go
+        if inhouse_ready is False:
+            await self.bot.say(self.print_ih('not_enough_queue'))
+            return
+
+        inhouse_started = False
+        # Move members back to the main lobby channel
+        for player in inhouse_t1:
+            await self.bot.move_member(player, self.bot.get_channel(inhouse_channels.get("Lobby")))
+        for player in inhouse_t2:
+            await self.bot.move_member(player, self.bot.get_channel(inhouse_channels.get("Lobby")))
+
+        # Reset team 1 and team 2 rosters
+        while inhouse_t1:
+            inhouse_players.append(inhouse_t1.pop())
+        while inhouse_t2:
+            inhouse_players.append(inhouse_t2.pop())
+
+        await self.bot.say(self.print_ih('end_match'))
 
     @inhouse.command(pass_context=True)
     async def finish(self, ctx):
@@ -201,384 +549,9 @@ class Inhouse:
             del inhouse_players[:]  # Delete current list of players
             del inhouse_t1[:]
             del inhouse_t2[:]
-            await self.print_ih('end_inhouse')
+            await self.bot.say(self.print_ih('end_inhouse'))
         else:
-            await self.print_ih('inactive_inhouse')
-        return
-
-
-    @inhouse.command(pass_context=True)
-    async def start(self, ctx):
-        """Starts a match"""
-        global inhouse_active
-        global inhouse_started
-        global inhouse_ready
-        global inhouse_players
-
-        # Role Check
-        member = ctx.message.author  # Fetch author user and permissions
-        if self.check_role(member, "Inhouse") is False:
-            return
-
-        # Check for active inhouse
-        if inhouse_active is False:
-            await self.print_ih('inactive_inhouse')
-            return
-
-        # Check if inhouse is full and ready to go
-        if inhouse_ready is False:
-            await self.print_ih('not_enough_queue')
-            return
-
-        # Check if there is an inhouse in-progress
-        if inhouse_started is True:
-            await self.print_ih('inprogress_inhouse')
-            return
-
-        cur_t1_slots = 0
-        inhouse_started = True
-
-        # While there are still players not on any teams
-        while inhouse_players:
-            # Random players onto team 1 and once full, throw rest into team 2
-            randy = random.choice(inhouse_players)
-            inhouse_players.remove(randy)
-            inhouse_t1.append(randy)
-            cur_t1_slots += 1
-
-            # Enough players on team 1
-            if cur_t1_slots == int(inhouse_t1_slots):
-
-                # Fill rest players into team 2
-                while inhouse_players:
-                    inhouse_t2.append(inhouse_players.pop())
-
-        # Print team rosters
-        #  Sort alphabetically
-        inhouse_t1.sort(key=lambda x: x.display_name)
-        inhouse_t2.sort(key=lambda x: x.display_name)
-        await self.print_ih("ready_help")
-        await self.print_ih("teams")
-        return
-
-
-    @inhouse.command(pass_context=True)
-    async def swap(self, ctx, t1_name: str, t2_name: str):
-        """Swaps two players"""
-        global inhouse_t1
-        global inhouse_t2
-
-        # Role Check
-        member = ctx.message.author  # Fetch author user and permissions
-        if self.check_role(member, "Inhouse") is False:
-            return
-
-        # Check for active inhouse
-        if inhouse_active is False:
-            await self.print_ih('inactive_inhouse')
-            return
-
-        # Check if inhouse is full and ready to go
-        if inhouse_ready is False:
-            await self.print_ih('not_enough_queue')
-            return
-
-        # Check if there is an inhouse in-progress
-        if inhouse_started is False:
-            await self.print_ih('no_inprogress_inhouse')
-            return
-
-        # Find Team 1 PLAYER #
-        t1_player = None  # Team 1 Target Player
-        # Regex to match all found names for team 1
-        p1_pattern = r'((' + re.escape(t1_name.lower()) + r')+(.)*)'
-        t1_matches = [x for x, x in enumerate(inhouse_t1) if re.search(p1_pattern, x.display_name.lower())]
-
-        # Return first player match of exact string
-        for x in t1_matches:
-            if x.display_name.lower() == t1_name.lower() or len(t1_matches) == 1:
-                t1_player = x
-                break
-
-        # If numerous matches, but no name exactly matches the given string
-        if len(t1_matches) > 1 and t1_player is None:
-            t1_dupe = ','.join(str(x.display_name) for x in t1_matches)
-            await self.print_ih('swap_too_many_cases', t1_dupe)
-            return
-        elif len(t1_matches) < 1:
-            await self.print_ih('not_found', t1_name)
-            return
-
-        # Find Team 2 PLAYER #
-        t2_player = None  # Team 2 Target Player
-        # Regex to match all found names for team 2
-        p2_pattern = r'((' + re.escape(t2_name.lower()) + r')+(.)*)'
-        t2_matches = [x for x, x in enumerate(inhouse_t2) if re.search(p2_pattern, x.display_name.lower())]
-
-        # Return first player match of exact string
-        for x in t2_matches:
-            if x.display_name.lower() == t2_name.lower() or len(t2_matches) == 1:
-                t2_player = x
-                break
-
-        # If numerous matches, but no name exactly matches the given string
-        if len(t2_matches) > 1 and t2_player is None:
-            t2_dupe = ','.join(str(x.display_name) for x in t2_matches)
-            await self.print_ih('swap_too_many_cases', t2_dupe)
-            return
-        elif len(t2_matches) < 1:
-            await self.print_ih('not_found', t2_name)
-            return
-
-        # Swap respective players and print new teams
-        if t1_player is not None and t2_player is not None:
-            p1_index = inhouse_t1.index(t1_player)
-            p2_index = inhouse_t2.index(t2_player)
-
-            inhouse_t2.append(inhouse_t1.pop(p1_index))
-            inhouse_t1.append(inhouse_t2.pop(p2_index))
-
-            # Print updated teams
-            inhouse_t1.sort()  # Sort alphabetically
-            inhouse_t2.sort()
-            await self.print_ih('ready_help')
-            await self.print_ih('swap_result', t1_player.display_name, t2_player.display_name)
-            await self.print_ih('teams')
-        return
-
-
-    @inhouse.command(pass_context=True)
-    async def move(self, ctx):
-        """Moves teams"""
-        # Role Check
-        member = ctx.message.author  # Fetch author user and permissions
-        if self.check_role(member, "Inhouse") is False:
-            return
-
-        # Check for active inhouse
-        if inhouse_active is False:
-            await self.print_ih('inactive_inhouse')
-            return
-
-        # Check if inhouse is full and ready to go
-        if inhouse_ready is False:
-            await self.print_ih('not_enough_queue')
-            return
-
-        # Check if there is an inhouse in-progress
-        if inhouse_started is False:
-            await self.print_ih('no_inprogress_inhouse')
-            return
-
-        # Move players into their respective inhouse voice channels
-        for player in inhouse_t1:
-            await self.bot.move_member(player, self.bot.get_channel(inhouse_channels.get("Channel 1")))
-        for player in inhouse_t2:
-            await self.bot.move_member(player, self.bot.get_channel(inhouse_channels.get("Channel 2")))
-        return
-
-
-    @inhouse.command(pass_context=True)
-    async def scramble(self, ctx):
-        """Scrambles teams"""
-
-        # Role Check
-        member = ctx.message.author  # Fetch author user and permissions
-        if self.check_role(member, "Inhouse") is False:
-            return
-
-        # Check for active inhouse
-        if inhouse_active is False:
-            await self.print_ih('inactive_inhouse')
-            return
-
-        # Check if inhouse is full and ready to go
-        if inhouse_ready is False:
-            await self.print_ih('not_enough_queue')
-            return
-
-        # Check if there is an inhouse in-progress
-        if inhouse_started is False:
-            await self.print_ih('no_inprogress_inhouse')
-            return
-
-        await self.print_ih('scramble', member.display_name)
-        cur_t1_slots = 0
-
-        # Reset team 1 and team 2 rosters
-        while inhouse_t1:
-            inhouse_players.append(inhouse_t1.pop())
-        while inhouse_t2:
-            inhouse_players.append(inhouse_t2.pop())
-
-        # While there are still players not on any teams
-        while inhouse_players:
-            # Random players onto team 1 and once full, throw rest into team 2
-            randy = random.choice(inhouse_players)
-            inhouse_players.remove(randy)
-            inhouse_t1.append(randy)
-            cur_t1_slots += 1
-
-            # Enough players on team 1
-            if cur_t1_slots == int(inhouse_t1_slots):
-
-                # Fill rest players into team 2
-                while inhouse_players:
-                    inhouse_t2.append(inhouse_players.pop())
-
-        # Print team rosters
-        inhouse_t1.sort()  # Sort alphabetically
-        inhouse_t2.sort()
-        await self.print_ih('ready_help')
-        await self.print_ih("teams")
-        return
-
-
-    @inhouse.command(pass_context=True)
-    async def end(self, ctx):
-        """Concludes a match"""
-
-        global inhouse_active
-        global inhouse_started
-        global inhouse_ready
-        global inhouse_players
-
-        # Role Check
-        member = ctx.message.author  # Fetch author user and permissions
-        if self.check_role(member, "Inhouse") is False:
-            return
-
-        # Check for active inhouse
-        if inhouse_active is False:
-            await self.print_ih('inactive_inhouse')
-            return
-
-        # Check if there is an inhouse in-progress
-        if inhouse_started is False:
-            await self.print_ih('no_inprogress_inhouse')
-            return
-
-        # Check if inhouse is full and ready to go
-        if inhouse_ready is False:
-            await self.print_ih('not_enough_queue')
-            return
-
-        inhouse_started = False
-        # Move members back to the main lobby channel
-        for player in inhouse_t1:
-            await self.bot.move_member(player, self.bot.get_channel(inhouse_channels.get("Lobby")))
-        for player in inhouse_t2:
-            await self.bot.move_member(player, self.bot.get_channel(inhouse_channels.get("Lobby")))
-
-        # Reset team 1 and team 2 rosters
-        while inhouse_t1:
-            inhouse_players.append(inhouse_t1.pop())
-        while inhouse_t2:
-            inhouse_players.append(inhouse_t2.pop())
-
-        await self.print_ih('end_match')
-        return
-
-
-    @inhouse.command(pass_context=True)
-    async def join(self, ctx):
-        """Joins the queue"""
-        global inhouse_players
-        global inhouse_current
-
-        # Role Check
-        member = ctx.message.author  # Fetch author user and permissions
-        if self.check_role(member, "Inhouse") is False:
-            return
-
-        # Check if readied already
-        if member in inhouse_players:
-            await self.print_ih('already_in_queue', member.display_name)
-            return
-
-        # Check for active inhouse
-        if inhouse_active is False:
-            await self.print_ih('inactive_inhouse')
-            return
-
-        # Check if inhouse is already full
-        if (inhouse_current == inhouse_total):
-            await self.print_ih('full_inhouse')
-            return
-
-        # Update player list and counters
-        inhouse_players.append(member)
-        inhouse_current += 1
-
-        await self.print_ih('join_queue', member.display_name, inhouse_current, inhouse_total)
-
-        # Check for if enough players have ready'd post-addition
-        if (inhouse_current == inhouse_total):
-            global inhouse_ready
-            inhouse_ready = True
-            await self.print_ih('commence_inhouse')
-
-
-    @inhouse.command(pass_context=True)
-    async def unjoin(self, ctx, player=None):
-        """Leaves the queue"""
-        global inhouse_ready
-        global inhouse_players
-        global inhouse_current
-
-        # Role Check
-        member = ctx.message.author  # Fetch author user and permissions
-        if self.check_role(member, "Inhouse") is False:
-            return
-
-        # Find player if optional arg is given #
-        if player is not None:
-            target = ""
-            # Regex to match all found names for team 1
-            player_pattern = r'((' + re.escape(player.lower()) + r')+(.)*)'
-            matches = [x for x, x in enumerate(inhouse_players) if re.search(player_pattern, x.display_name.lower())]
-
-            # Return first player match of exact string
-            for x in matches:
-                if x.display_name.lower() == player.lower() or len(matches) == 1:
-                    target = x
-                    break
-
-            # If numerous matches, but no name exactly matches the given string
-            if len(matches) > 1 and not target:
-                dupe = ','.join(str(x.display_name) for x in matches)
-                await self.print_ih('leave_queue_too_many_cases', dupe)
-                return
-            elif len(matches) < 1:
-                await self.print_ih('not_found', player)
-                return
-
-            # Set player to actual member object if pass all checks
-            player = target
-
-        # Check if member readied originally
-        if member not in inhouse_players and player is None:
-            await self.print_ih('not_in_queue', member.display_name)
-            return
-
-        # Check for active inhouse
-        if inhouse_active is False:
-            await self.print_ih('inactive_inhouse')
-            return
-
-        # Update player list and counters
-        if player is not None:
-            inhouse_players.remove(player)
-            inhouse_current -= 1
-            await self.print_ih('leave_queue', player.display_name, inhouse_current, inhouse_total)
-        else:
-            inhouse_players.remove(member)
-            inhouse_current -= 1
-            await self.print_ih('leave_queue', member.display_name, inhouse_current, inhouse_total)
-
-        # Update inhouse status
-        if inhouse_ready is True:
-            inhouse_ready = False
+            await self.bot.say(self.print_ih('inactive_inhouse'))
 
 def setup(bot):
     bot.add_cog(Inhouse(bot))
