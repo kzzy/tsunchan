@@ -551,5 +551,20 @@ class Inhouse:
         else:
             await self.bot.say(self.print_ih('inactive_inhouse'))
 
+    @inhouse.command(pass_context=True)
+    async def get(self, ctx):
+        # Updates list based on players in channel
+        global inhouse_players
+
+        channel = self.bot.get_channel(inhouse_channels.get("Lobby"))
+        voicemembers = channel.voice_members
+
+        for x in range(0, len(voicemembers)):
+            await self.bot.say(voicemembers[x])
+
+
+
+
+
 def setup(bot):
     bot.add_cog(Inhouse(bot))
