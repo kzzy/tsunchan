@@ -20,7 +20,6 @@ inhouse_channels = {'Lobby': '395892786999721986',  # Lobby     ID
                     }
 
 class Inhouse:
-
     def __init__(self, bot):
         self.bot = bot
 
@@ -34,7 +33,6 @@ class Inhouse:
     def print_ih(self, instruct : str, input_1="", input_2="", input_3="", input_4=""):
         """ Helper Function to organize text printing"""
         txt = ""
-
         if instruct == "teams":
             t1 = "TEAM 1"
             t2 = "TEAM 2"
@@ -115,7 +113,7 @@ class Inhouse:
             txt += '{0} never joined the queue in the first place.'.format(input_1)
         return txt
 
-    @commands.group(pass_context=True)
+    @commands.group(pass_context=True, aliases=['ih'])
     async def inhouse(self, ctx):
         """Inhouse System"""
         # Role Check

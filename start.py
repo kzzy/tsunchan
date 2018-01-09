@@ -10,6 +10,7 @@ import random
 # Captains mode [Manual pick of captains 1-2-2-1-1]
 # Revise init function auto-ready those already present in lobby channel
 # Revise inhouse to automatically exec next phase[start] when the final player readys
+# Status command to reprint status
 
 startup_extensions = (
     'cogs.rng',
@@ -53,38 +54,68 @@ async def unload(extension_name : str):
 
 async def pick_status():
     """Randomly generates a new status on duration"""
-    counter = 0
+    playing_status = ["with Rem",
+                      "with Ram",
+                      "with Emilia",
+                      "with Noumi Kudryavka",
+                      "with Illya",
+                      "with Chitoge",
+                      "with Yoshino",
+                      "with Arisu Shimada",
+                      "with Shirokuma",
+                      "with Karen",
+                      "with Kyon's Sister",
+                      "with Est",
+                      "with Aria Kanzaki",
+                      "with the Nep Sisters",
+                      "with Chino",
+                      "with Kyouko",
+                      "with Konata",
+                      "with Enju",
+                      "with Kirin Toudou",
+                      "with Shinobu",
+                      "with Megumin",
+                      "with Mikan",
+                      "with kazu",  # yaya no
+                      "with Indekkusu"
+                      ]
 
+                        # GET SUMTING G00D
+    listening_status = ["",
+                        "",
+                        ""
+                        ]
+
+                        # Titles
+    watching_status = ["To Love-Ru",
+                       "Seirei Tsukai no Blade Dance",
+                       "Hidan no Aria",
+                       "No Game No Life",
+                       "KonoSuba",
+                       "Haiyore!",
+                       "Gabriel Dropout",
+                       "Eromanga-sensei",
+                       "Date a Live",
+                       # Other
+                       "Umaru cheat",
+                       "Sagiri draw",
+                       "",
+                       # Server Easter Eggs
+                       "Urban's MMR drop",
+                       "-sg get killstolen",
+                       "kazu carry ~kyaa",
+                       "Tracker get rained"
+                       ]
+    status = [playing_status, watching_status]
+    # type=1 playing, type=2 listening, type=3 watching
     while bot.is_logged_in:
-        status = random.choice(["with Rem",
-                                "with Ram",
-                                "with Emilia",
-                                "with Noumi Kudryavka",
-                                "with Illya",
-                                "with Chitoge",
-                                "with Yoshino",
-                                "with Arisu Shimada",
-                                "with Shirokuma",
-                                "with Karen",
-                                "with Kyon's Sister",
-                                "with Est",
-                                "with Aria Kanzaki",
-                                "with the Nep Sisters",
-                                "with Chino",
-                                "with Kyouko",
-                                "with Konata",
-                                "with Enju",
-                                "with Kirin Toudou",
-                                "with Shinobu",
-                                "with Megumin",
-                                "with Mikan",
-                                "with kazu",  # yaya no
-                                "with Indekkusu"])
+        pick = random.choice(status)
+        if pick is playing_status:
+            await bot.change_presence(game=discord.Game(name=random.choice(pick), type=1), status=discord.Status.online)
+        elif pick is watching_status:
+            await bot.change_presence(game=discord.Game(name=random.choice(pick), type=3), status=discord.Status.online)
 
-        logger.info("Loop Counter: " + str(int(counter)) + ",Picked a new status: " + status)
-        counter += 1
-        await bot.change_presence(game=discord.Game(name=status, type=1), status=discord.Status.online)
-        await asyncio.sleep(12)  # loops every 12 seconds
+        await asyncio.sleep(25)  # loops every 25 seconds
 
 if __name__ == "__main__":
     # Cycle through startup extensions
