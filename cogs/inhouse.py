@@ -22,6 +22,7 @@ inhouse_channels = {'Lobby': '395892786999721986',  # Lobby     ID
 class Inhouse:
     def __init__(self, bot):
         self.bot = bot
+        self.prev_t1 = []
 
     def check_role(self, member, target):
         """ Helper function to validate given member with given target role"""
@@ -76,7 +77,7 @@ class Inhouse:
             txt += 'Sorry the inhouse is currently full. Baka!'
 
         elif instruct == "end_inhouse":
-            txt += 'The current inhouse session ended.'
+            txt += 'Exited Inhouse session.'
 
         elif instruct == "not_found":
             txt += "There are no players found with your search key: **{0}**".format(input_1)
@@ -111,6 +112,12 @@ class Inhouse:
 
         elif instruct == "not_in_queue":
             txt += '{0} never joined the queue in the first place.'.format(input_1)
+
+        elif instruct == "ready_help_rematch":
+            txt += "```Commands\n!inhouse move to start the match\n!inhouse scramble to randomize teams again.\n!inhouse swap <p1> <p2> to swap specific players.\n\nREMATCH Called by {0}!```".format(input_1)
+
+        elif instruct == "no_prev_game":
+            txt += 'There was no previous game played.\nActually play a game then request a rematch!'
         return txt
 
     @commands.group(pass_context=True, aliases=['ih'])
@@ -211,7 +218,66 @@ class Inhouse:
         inhouse_t2.sort(key=lambda x: x.display_name)
         await self.bot.say(self.print_ih("ready_help") + '\n' + self.print_ih("teams"))
 
-    @inhouse.command(pass_context=True)
+    @inhouse.command(pass_context=True, aliases=['rm'])
+    async def rematch(self, ctx):
+        """Starts a rematch"""
+        global inhouse_started
+
+        # Role Check
+        member = ctx.message.author  # Fetch author user and permissions
+        if self.check_role(member, "Inhouse") is False:
+            return
+
+        # Check for active inhouse
+        if inhouse_active is False:
+            await self.bot.say(self.print_ih('inactive_inhouse'))
+            return
+
+        # Check if inhouse is full and ready to go
+        if inhouse_ready is False:
+            await self.bot.say(self.print_ih('not_enough_queue'))
+            return
+
+        # Check if there is an inhouse in-progress
+        if inhouse_started is True:
+            await self.bot.say(self.print_ih('inprogress_inhouse'))
+            return
+
+        # Check if this is the 1st game, meaning there was not a previous game
+        # If there is anything in prev_t1, then there was a previous game
+        if not self.prev_t1:
+            await self.bot.say(self.print_ih('no_prev_game'))
+            return
+
+        cur_t1_slots = 0
+        inhouse_started = True
+
+        # While there are still players not on any teams
+        while inhouse_players:
+            # For each unique player, loop through the inhouse players list to find that player
+            # ASSUMES ALL PLAYERS ARE STILL PRESENT !!!
+            for player_name in self.prev_t1:
+                player = [person for person in inhouse_players if person.display_name == player_name]
+                inhouse_players.remove(player[0])
+                inhouse_t1.append(player[0])
+                cur_t1_slots += 1
+
+            # Enough players on team 1
+            if cur_t1_slots == int(inhouse_t1_slots):
+
+                # Fill rest players into team 2
+                while inhouse_players:
+                    inhouse_t2.append(inhouse_players.pop())
+
+        del self.prev_t1[:] # Delete old team history
+
+        # Print team rosters
+        #  Sort alphabetically
+        inhouse_t1.sort(key=lambda x: x.display_name)
+        inhouse_t2.sort(key=lambda x: x.display_name)
+        await self.bot.say(self.print_ih("ready_help_rematch", member.display_name) + '\n' + self.print_ih("teams"))
+        
+    @inhouse.command(pass_context=True, aliases=['j'])
     async def join(self, ctx):
         """Joins the queue"""
         global inhouse_players
@@ -249,7 +315,7 @@ class Inhouse:
         else:
             await self.bot.say(self.print_ih('join_queue', member.display_name, inhouse_current, inhouse_total))
 
-    @inhouse.command(pass_context=True)
+    @inhouse.command(pass_context=True, aliases=['uj'])
     async def unjoin(self, ctx, player=None):
         """Leaves the queue"""
         global inhouse_ready
@@ -390,7 +456,7 @@ class Inhouse:
             inhouse_t2.sort()
             await self.bot.say(self.print_ih('ready_help')+'\n'+self.print_ih('swap_result', t1_player.display_name, t2_player.display_name)+'\n\n'+self.print_ih('teams'))
 
-    @inhouse.command(pass_context=True)
+    @inhouse.command(pass_context=True, aliases=['mv'])
     async def move(self, ctx):
         """Moves teams"""
         # Role Check
@@ -510,7 +576,9 @@ class Inhouse:
 
         # Reset team 1 and team 2 rosters
         while inhouse_t1:
-            inhouse_players.append(inhouse_t1.pop())
+            t1_player = inhouse_t1.pop()
+            self.prev_t1.append(t1_player.display_name) # Keep track of old t1 players incase of rematch cmd * ONLY NEED 1 TEAMS ROSTER TO KNOW BOTH
+            inhouse_players.append(t1_player)
         while inhouse_t2:
             inhouse_players.append(inhouse_t2.pop())
 
@@ -544,12 +612,24 @@ class Inhouse:
             inhouse_t1_slots = 0
             inhouse_t2_slots = 0
             inhouse_game = ""
-            del inhouse_players[:]  # Delete current list of players
+            del inhouse_players[:]  # Delete player data
             del inhouse_t1[:]
             del inhouse_t2[:]
+            del self.prev_t1[:]
             await self.bot.say(self.print_ih('end_inhouse'))
         else:
             await self.bot.say(self.print_ih('inactive_inhouse'))
+
+    @inhouse.command(pass_context=True)
+    async def get(self, ctx):
+        # Updates list based on players in channel
+        global inhouse_players
+
+        channel = self.bot.get_channel(inhouse_channels.get("Lobby"))
+        voicemembers = channel.voice_members
+
+        for x in range(0, len(voicemembers)):
+            await self.bot.say(voicemembers[x])
 
 def setup(bot):
     bot.add_cog(Inhouse(bot))
