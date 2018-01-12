@@ -115,7 +115,7 @@ async def pick_status():
         elif pick is watching_status:
             await bot.change_presence(game=discord.Game(name=random.choice(pick), type=3), status=discord.Status.online)
 
-        await asyncio.sleep(25)  # loops every 25 seconds
+        await asyncio.sleep(30)  # loops every 30 seconds
 
 if __name__ == "__main__":
     # Cycle through startup extensions
