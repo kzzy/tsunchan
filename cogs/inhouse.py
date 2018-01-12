@@ -20,6 +20,9 @@ inhouse_channels = {'Lobby': '395892786999721986',  # Lobby     ID
                     }
 
 class Inhouse:
+    # This class sorts users into two teams based off of parameters specified by the host of the event.
+    # The host initializes the event with parameters of the size of the teams
+    # (WIP)
     def __init__(self, bot):
         self.bot = bot
 
@@ -553,15 +556,41 @@ class Inhouse:
 
     @inhouse.command(pass_context=True)
     async def get(self, ctx):
+        # This function gets a player list based off the people who are in voice channel Inhouse
+        # It allows the option to start the inhouse if the player list gathers the correct amount of people
+        # specified by the initialization.
+
         # Updates list based on players in channel
+        global inhouse_ready
         global inhouse_players
+        global inhouse_total
+
+        # Role Check
+        member = ctx.message.author  # Fetch author user and permissions
+        if self.check_role(member, "Inhouse") is False:
+            return
 
         channel = self.bot.get_channel(inhouse_channels.get("Lobby"))
         voicemembers = channel.voice_members
 
+        # Role Check for all members
         for x in range(0, len(voicemembers)):
-            await self.bot.say(voicemembers[x])
+            member = voicemembers[x]
+            if member.check_role(member, "Inhouse") is False:
+                return
 
+        inhouse_players = voicemembers
+
+        for x in range(0, len(inhouse_players)):
+            voicemember = voicemembers[x]
+            await self.bot.say(voicemember.display_name)
+
+        if len(inhouse_players) is inhouse_total:
+            inhouse_ready = True
+            await self.bot.say('Total No. of members match with Inhouse total, "!inhouse start" to begin')
+        else:
+            inhouse_ready = False
+            await self.bot.say('You need ' + inhouse_total-len(inhouse_players) + ' more players')
 
 
 
