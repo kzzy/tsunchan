@@ -1,6 +1,7 @@
 from discord.ext import commands
 import re
 import random
+import itertools
 
 """Global Variables"""
 inhouse_active = False  # Boolean Used for !inhouse series of commands
@@ -39,8 +40,14 @@ class Inhouse:
             t2 = "TEAM 2"
             txt += "`{:<35}{}`".format(t1, t2)
             txt += '\n'
-            for player_t1, player_t2 in zip(inhouse_t1, inhouse_t2):
-                txt += "`{:<35}{}`".format(player_t1.display_name, player_t2.display_name)
+            for player_t1,player_t2 in itertools.zip_longest(inhouse_t1, inhouse_t2):
+                if player_t1 is None:
+                    txt += '    \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t' # Lack of Embedding options
+                    txt += "`{:>35}`".format(player_t2.display_name)
+                elif player_t2 is None:
+                    txt += "`{}`".format(player_t1.display_name)
+                else:
+                    txt += "`{:<35}{}`".format(player_t1.display_name, player_t2.display_name)
                 txt += '\n'
 
         elif instruct == "ready_help":
@@ -452,8 +459,8 @@ class Inhouse:
             inhouse_t1.append(inhouse_t2.pop(p2_index))
 
             # Print updated teams
-            inhouse_t1.sort()  # Sort alphabetically
-            inhouse_t2.sort()
+            inhouse_t1.sort(key=lambda x: x.display_name) # Sorting Alphabetically
+            inhouse_t2.sort(key=lambda x: x.display_name)
             await self.bot.say(self.print_ih('ready_help')+'\n'+self.print_ih('swap_result', t1_player.display_name, t2_player.display_name)+'\n\n'+self.print_ih('teams'))
 
     @inhouse.command(pass_context=True, aliases=['mv'])
@@ -534,8 +541,8 @@ class Inhouse:
                     inhouse_t2.append(inhouse_players.pop())
 
         # Print team rosters
-        inhouse_t1.sort()  # Sort alphabetically
-        inhouse_t2.sort()
+        inhouse_t1.sort(key=lambda x: x.display_name)  # Sorting Alphabetically
+        inhouse_t2.sort(key=lambda x: x.display_name)
         await self.bot.say(self.print_ih('scramble', member.display_name) + '\n' + self.print_ih('ready_help') + '\n' + self.print_ih("teams"))
 
     @inhouse.command(pass_context=True)
@@ -630,6 +637,6 @@ class Inhouse:
 
         for x in range(0, len(voicemembers)):
             await self.bot.say(voicemembers[x])
-            
+
 def setup(bot):
     bot.add_cog(Inhouse(bot))
