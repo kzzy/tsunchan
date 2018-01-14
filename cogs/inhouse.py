@@ -296,9 +296,9 @@ class Inhouse:
             return
 
         # Check if readied already
-        if member in inhouse_players:
-            await self.bot.say(self.print_ih('already_in_queue', member.display_name))
-            return
+        #if member in inhouse_players:
+        #    await self.bot.say(self.print_ih('already_in_queue', member.display_name))
+        #    return
 
         # Check for active inhouse
         if inhouse_active is False:
@@ -641,23 +641,13 @@ class Inhouse:
     @inhouse.command(pass_context=True, hidden=True)
     async def status(self, ctx):
         """Debug Function"""
-        global inhouse_active
-        global inhouse_started
-        global inhouse_ready
-        global inhouse_current
-        global inhouse_total
-        global inhouse_players
-        global inhouse_t1_slots
-        global inhouse_t2_slots
-        global inhouse_t1
-        global inhouse_t2
-        global inhouse_game
 
-        #Extracts names from member class
+        # Extracts names from member class
         player_list = []
         player_t1_list = []
         player_t2_list = []
-        for x in range (0, len(inhouse_players)):
+
+        for x in range(0, len(inhouse_players)):
             player_list.append(inhouse_players[x].display_name)
 
         for x in range(0, len(inhouse_t1)):
@@ -666,17 +656,17 @@ class Inhouse:
         for x in range(0, len(inhouse_t2)):
             player_t2_list.append(inhouse_t2[x].display_name)
 
-        #Displays statuses in a list in discord
+        # Displays statuses in a list in discord
         await self.bot.say('inhouse_active: ' + str(inhouse_active) + '\n' +
                            'inhouse_started: ' + str(inhouse_started) + '\n' +
                            'inhouse_ready: ' + str(inhouse_ready) + '\n' 
                            'inhouse_current: ' + str(inhouse_current) + '\n' +
                            'inhouse_total: ' + str(inhouse_total) + '\n' +
-                           'inhouse_players: ' + str(player_list) + '\n' +
+                           'inhouse_players: ' + str(player_list).strip('[]') + '\n' +
                            'inhouse_t1_slots: ' + str(inhouse_t1_slots) + '\n' +
-                           'inhouse_t1: ' + str(player_t1_list[:]) + '\n' +
+                           'inhouse_t1: ' + str(player_t1_list).strip('[]') + '\n' +
                            'inhouse_t2_slots: ' + str(inhouse_t2_slots) + '\n' +
-                           'inhouse_t2: ' + str(player_t2_list[:]) + '\n' +
+                           'inhouse_t2: ' + str(player_t2_list).strip('[]') + '\n' +
                            'inhouse_game: ' + str(inhouse_game))
 
 
