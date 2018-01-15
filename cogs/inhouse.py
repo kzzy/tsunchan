@@ -6,6 +6,7 @@ import random
 inhouse_active = False  # Boolean Used for !inhouse series of commands
 inhouse_started = False  # Boolean Used to check for in-progress inhouse sessions
 inhouse_ready = False  # Ready state once total players are met
+inhouse_get_start = False # If started with get function, set True (program behaves differently than from join)
 inhouse_game = ""
 inhouse_players = []  # List for !inhouse players
 inhouse_current = 0  # Current amount of players
@@ -16,7 +17,8 @@ inhouse_t1_slots = 0  # Team 1 total slots
 inhouse_t2_slots = 0  # Team 2 total slots
 inhouse_channels = {'Lobby': '395892786999721986',  # Lobby     ID
                     'Channel 1': '395897418094215168',  # Channel 1 ID
-                    'Channel 2': '395897458032377859'  # Channel 2 ID
+                    'Channel 2': '395897458032377859',  # Channel 2 ID
+                    'Empty' : '395896022754394114' # Empty Server (This is the bottom channel)
                     }
 
 class Inhouse:
@@ -114,6 +116,9 @@ class Inhouse:
 
         elif instruct == "not_in_queue":
             txt += '{0} never joined the queue in the first place.'.format(input_1)
+
+        elif instruct == "enough_players_get":
+            txt += 'Total No. of members match with Inhouse total, "!inhouse start" to begin'.format(input_1)
         return txt
 
     @commands.group(pass_context=True, aliases=['ih'])
@@ -267,7 +272,7 @@ class Inhouse:
         # Find player if optional arg is given #
         if player is not None:
             target = ""
-            # Regex to match all found names for team 1
+            # Regex to match all found n!ames for team 1
             player_pattern = r'((' + re.escape(player.lower()) + r')+(.)*)'
             matches = [x for x, x in enumerate(inhouse_players) if re.search(player_pattern, x.display_name.lower())]
 
@@ -512,11 +517,21 @@ class Inhouse:
             await self.bot.move_member(player, self.bot.get_channel(inhouse_channels.get("Lobby")))
 
         # Reset team 1 and team 2 rosters
+        # MERGE
+        # Appending the inhouse_player currently messes up the get function
+        # The reason being is hard to figure out. However, appending to inhouse_players
+        # ends up duping players.
         while inhouse_t1:
-            inhouse_players.append(inhouse_t1.pop())
+            if inhouse_get_start is True:
+                inhouse_t1.pop()
+            else:
+                inhouse_players.append(inhouse_t1.pop())
         while inhouse_t2:
-            inhouse_players.append(inhouse_t2.pop())
-
+            if inhouse_get_start is True:
+                inhouse_t2.pop()
+            else:
+                inhouse_players.append(inhouse_t2.pop())
+        # MERGE
         await self.bot.say(self.print_ih('end_match'))
 
     @inhouse.command(pass_context=True)
@@ -531,6 +546,7 @@ class Inhouse:
         global inhouse_t1_slots
         global inhouse_t2_slots
         global inhouse_game
+        global inhouse_channels
 
         # Role Check
         member = ctx.message.author  # Fetch author user and permissions
@@ -547,9 +563,14 @@ class Inhouse:
             inhouse_t1_slots = 0
             inhouse_t2_slots = 0
             inhouse_game = ""
-            del inhouse_players[:]  # Delete current list of players
+            if inhouse_get_start is True:                                       #THIS IS A WORKAROUND. If you use get, you cannot delete the list
+                channel = self.bot.get_channel(inhouse_channels.get("Empty"))   #or it will break.
+                inhouse_players = channel.voice_members
+            else:
+                del inhouse_players[:]  # Delete current list of players
             del inhouse_t1[:]
             del inhouse_t2[:]
+            inhouse_get_start = False
             await self.bot.say(self.print_ih('end_inhouse'))
         else:
             await self.bot.say(self.print_ih('inactive_inhouse'))
@@ -563,36 +584,49 @@ class Inhouse:
         # Updates list based on players in channel
         global inhouse_ready
         global inhouse_players
-        global inhouse_total
+        global inhouse_current
+        global inhouse_get_start
 
         # Role Check
         member = ctx.message.author  # Fetch author user and permissions
         if self.check_role(member, "Inhouse") is False:
+           return
+
+        # Get Channel Member
+        channel = self.bot.get_channel(inhouse_channels.get("Lobby"))
+
+        if inhouse_active is False:
+            await self.bot.say(self.print_ih('inactive_inhouse'))
             return
 
-        channel = self.bot.get_channel(inhouse_channels.get("Lobby"))
-        voicemembers = channel.voice_members
+        if inhouse_started is True:
+            await self.bot.say(self.print_ih("inprogress_inhouse"))
+            return
 
         # Role Check for all members
-        for x in range(0, len(voicemembers)):
-            member = voicemembers[x]
-            if member.check_role(member, "Inhouse") is False:
+        for x in range(0, len(channel.voice_members)):
+            voice_member = channel.voice_members[x]
+            if voice_member.roles == "Inhouse" is False:
                 return
 
-        inhouse_players = voicemembers
+        #Updates inhouse_players when role check passes
+        inhouse_players = channel.voice_members
+        inhouse_current = len(inhouse_players)
 
-        for x in range(0, len(inhouse_players)):
-            voicemember = voicemembers[x]
-            await self.bot.say(voicemember.display_name)
+        #Prints Player list
+        await self.bot.say("Player list:")
+        for x in range(0, inhouse_current):
+            inhousemember = inhouse_players[x]
+            await self.bot.say(inhousemember.display_name)
 
-        if len(inhouse_players) is inhouse_total:
+        # Tests if the inhouse_current matches with the inhouse specified in initialization
+        if inhouse_current is inhouse_total:
             inhouse_ready = True
-            await self.bot.say('Total No. of members match with Inhouse total, "!inhouse start" to begin')
+            inhouse_get_start = True
+            await self.bot.say(self.print_ih('enough_players_get'))
         else:
             inhouse_ready = False
-            await self.bot.say('You need ' + inhouse_total-len(inhouse_players) + ' more players')
-
-
+            await self.bot.say('You need ' + str(inhouse_total-inhouse_current) + ' more players')
 
 
 def setup(bot):
