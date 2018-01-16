@@ -1,5 +1,3 @@
-                      
-=======
 from discord.ext import commands
 import re
 import random
@@ -130,7 +128,7 @@ class Inhouse:
         elif instruct == "no_prev_game":
             txt += 'There was no previous game played.\nActually play a game then request a rematch!'
             
-       elif instruct == "enough_players_get":
+        elif instruct == "enough_players_get":
             txt += 'Total No. of members match with Inhouse total, "!inhouse start" to begin'.format(input_1)
         return txt
 
@@ -649,6 +647,7 @@ class Inhouse:
 
     @inhouse.command(pass_context=True)
     async def get(self, ctx):
+        """Shortcut inhouse init"""
         # This function gets a player list based off the people who are in voice channel Inhouse
         # It allows the option to start the inhouse if the player list gathers the correct amount of people
         # specified by the initialization.
@@ -685,20 +684,25 @@ class Inhouse:
         inhouse_players = channel.voice_members
         inhouse_current = len(inhouse_players)
 
+        txt = ""
         #Prints Player list
-        await self.bot.say("Player list:")
+        txt += 'Player List: '
+        txt += '\n'
         for x in range(0, inhouse_current):
             inhousemember = inhouse_players[x]
-            await self.bot.say(inhousemember.display_name)
+            txt += inhousemember.display_name
+            txt += '\n'
 
         # Tests if the inhouse_current matches with the inhouse specified in initialization
         if inhouse_current is inhouse_total:
             inhouse_ready = True
             inhouse_get_start = True
-            await self.bot.say(self.print_ih('enough_players_get'))
+            txt += self.print_ih('enough_players_get')
         else:
             inhouse_ready = False
-            await self.bot.say('You need ' + str(inhouse_total-inhouse_current) + ' more players')
+            txt += 'You need ' + str(inhouse_total-inhouse_current) + ' more players'
+
+        await self.bot.say(txt)
 
     @inhouse.command(pass_context=True, hidden=True)
     async def status(self, ctx):
@@ -730,7 +734,6 @@ class Inhouse:
                            'inhouse_t2_slots: ' + str(inhouse_t2_slots) + '\n' +
                            'inhouse_t2: ' + str(player_t2_list).strip('[]') + '\n' +
                            'inhouse_game: ' + str(inhouse_game))
-
 
 def setup(bot):
     bot.add_cog(Inhouse(bot))
