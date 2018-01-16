@@ -19,7 +19,6 @@ inhouse_t2_slots = 0  # Team 2 total slots
 inhouse_channels = {'Lobby': '395892786999721986',  # Lobby     ID
                     'Channel 1': '395897418094215168',  # Channel 1 ID
                     'Channel 2': '395897458032377859',  # Channel 2 ID
-                    'Empty' : '395896022754394114' # Empty Server (This is the bottom channel)
                     }
 
 class Inhouse:
@@ -632,12 +631,8 @@ class Inhouse:
             inhouse_total = 0
             inhouse_t1_slots = 0
             inhouse_t2_slots = 0
-            inhouse_game = ""    
-            if inhouse_get_start is True:                                       #THIS IS A WORKAROUND. If you use get, you cannot delete the list
-                channel = self.bot.get_channel(inhouse_channels.get("Empty"))   #or it will break.
-                inhouse_players = channel.voice_members
-            else:
-                del inhouse_players[:]  # Delete current list of players
+            inhouse_game = ""
+            del inhouse_players[:]  # Delete current list of players
             del inhouse_t1[:]
             del inhouse_t2[:]
             del self.prev_t1[:]
@@ -681,7 +676,8 @@ class Inhouse:
                 return
 
         #Updates inhouse_players when role check passes
-        inhouse_players = channel.voice_members
+        for x in channel.voice_members:
+            inhouse_players.append(x)
         inhouse_current = len(inhouse_players)
 
         txt = ""
