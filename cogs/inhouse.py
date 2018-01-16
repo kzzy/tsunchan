@@ -8,7 +8,7 @@ inhouse_active = False  # Boolean Used for !inhouse series of commands
 inhouse_started = False  # Boolean Used to check for in-progress inhouse sessions
 inhouse_ready = False  # Ready state once total players are met
 inhouse_get_start = False # If started with get function, set True (program behaves differently than from join)
-inhouse_game = ""
+inhouse_game = "" # Inhouse game name
 inhouse_players = []  # List for !inhouse players
 inhouse_current = 0  # Current amount of players
 inhouse_total = 0  # Total amount players
@@ -16,10 +16,13 @@ inhouse_t1 = []  # List for Team 1 players
 inhouse_t2 = []  # List for Team 2 players
 inhouse_t1_slots = 0  # Team 1 total slots
 inhouse_t2_slots = 0  # Team 2 total slots
-inhouse_channels = {'Lobby': '395892786999721986',  # Lobby     ID
-                    'Channel 1': '395897418094215168',  # Channel 1 ID
-                    'Channel 2': '395897458032377859',  # Channel 2 ID
+inhouse_channels = {'Lobby' : '395892786999721986',      # Lobby     ID
+                    'Channel 1' : '395897418094215168',  # Channel 1 ID
+                    'Channel 2' : '395897458032377859',  # Channel 2 ID
                     }
+inhouse_mode = "" # Current Inhouse Mode
+inhouse_modes = {'standard' : False, # Hold mode names and boolean vals
+                 'captains' : False}
 
 class Inhouse:
     def __init__(self, bot):
@@ -33,7 +36,7 @@ class Inhouse:
                 return True
         return False
 
-    def print_ih(self, instruct : str, input_1="", input_2="", input_3="", input_4=""):
+    def print_ih(self, instruct : str, input_1="", input_2="", input_3="", input_4="", input_5=""):
         """ Helper Function to organize text printing"""
         txt = ""
         if instruct == "teams":
@@ -64,7 +67,7 @@ class Inhouse:
             txt += 'There is no active inhouse currently going.\nPlease refer to **!help inhouse**'
 
         elif instruct == "init_inhouse":
-            txt += '**{0}** has started an inhouse.\n```{1}\t({2} VS {3})```'.format(input_1, input_2, input_3, input_4)
+            txt += '**{0}** has started an inhouse.\n```GAME: {1}\nMODE: {2}\nTYPE: {3} VS {4}```'.format(input_1, input_2, input_3, input_4, input_5)
 
         elif instruct == "commence_inhouse":
             txt += '**Inhouse is ready to commence**\n\n`Type in \'!inhouse start\' to begin`'
@@ -93,6 +96,9 @@ class Inhouse:
         # Unique Cases #
         elif instruct == "init_illegal_team_slots":
             txt += "The team numbers are illegal, must be > 0"
+
+        elif instruct == "init_illegal_team_slots_captains":
+            txt += "The team numbers are illegal, the setup must be a 5 vs 5!"
 
         elif instruct == "swap_too_many_cases":
             txt += "There are numerous players with the same names in Team 1. (**{0}**)\nRefine your search, then try again.".format(input_1)
@@ -129,6 +135,10 @@ class Inhouse:
             
         elif instruct == "enough_players_get":
             txt += 'Total No. of members match with Inhouse total, "!inhouse start" to begin'.format(input_1)
+
+        elif instruct == "invalid_mode":
+            txt += 'The given mode: **{0}** for the Inhouse is invalid.'.format(input_1)
+
         return txt
 
     @commands.group(pass_context=True, aliases=['ih'])
@@ -146,7 +156,7 @@ class Inhouse:
         return
 
     @inhouse.command(pass_context=True)
-    async def init(self, ctx, game: str, t1_slots: str, t2_slots: str):
+    async def init(self, ctx, game: str, t1_slots: str, t2_slots: str, mode: str):
         """Initializes inhouse"""
         global inhouse_active
         global inhouse_total
@@ -169,13 +179,34 @@ class Inhouse:
             await self.bot.say(self.print_ih('inactive_inhouse'))
             return
 
+        # Set Inhouse Mode
+        mode = mode.lower()
+        if(mode in inhouse_modes):
+            inhouse_mode = mode
+
+            if inhouse_mode == 'standard':
+                inhouse_modes.update({"standard": True})
+                mode = "Standard" # Fix text for printing
+            elif inhouse_mode == 'captains':
+                # Slot checking for ONLY 5 VS 5
+                if int(t1_slots) != 5 and int(t2_slots) != 5:
+                    await self.bot.say(self.print_ih('init_illegal_team_slots_captains'))
+                    return
+                else:
+                    inhouse_modes.update({"captains": True})
+                    mode = "Captain's Mode"
+        else:
+            # Invalid mode detected
+            await self.bot.say(self.print_ih('invalid_mode', mode))
+            return
+
         inhouse_active = True
         inhouse_game = game
         inhouse_t1_slots = t1_slots
         inhouse_t2_slots = t2_slots
         inhouse_total = int(t1_slots) + int(t2_slots)
 
-        await self.bot.say(self.print_ih('init_inhouse', member.display_name, inhouse_game, t1_slots, t2_slots))
+        await self.bot.say(self.print_ih('init_inhouse', member.display_name, inhouse_game, mode, t1_slots, t2_slots))
 
     @inhouse.command(pass_context=True)
     async def start(self, ctx):
@@ -624,6 +655,8 @@ class Inhouse:
 
         if inhouse_active is True:
             # Reset variables
+            inhouse_modes.update({"standard": False})
+            inhouse_modes.update({"captains": False})
             inhouse_active = False
             inhouse_started = False
             inhouse_ready = False
