@@ -29,6 +29,33 @@ class Inhouse:
         self.bot = bot
         self.prev_t1 = []
 
+    def search_player(self, player, location):
+        """ Helper function to search for member_object given player_name and search location
+            Returns the player member object if found, or None if not found"""
+
+        target = ""
+        # Regex to match all found names for team 1
+        player_pattern = r'((' + re.escape(player.lower()) + r')+(.)*)'
+        matches = [x for x, x in enumerate(location) if re.search(player_pattern, x.display_name.lower())]
+
+        # Return first player match of exact string
+        for x in matches:
+            if x.display_name.lower() == player.lower() or len(matches) == 1:
+                target = x
+                break
+
+        # If numerous matches, but no name exactly matches the given string
+        # RETURN respective error codes
+        if len(matches) > 1 and not target:
+            # Multiple matches were found
+            return -1
+        elif len(matches) < 1:
+            # No matches were found
+            return 0
+
+        # Found target match
+        return target
+
     def check_role(self, member, target):
         """ Helper function to validate given member with given target role"""
         for role in member.roles:
@@ -91,7 +118,10 @@ class Inhouse:
             txt += 'Exited Inhouse session.'
 
         elif instruct == "not_found":
-            txt += "There are no players found with your search key: **{0}**".format(input_1)
+            txt += "There were multiple names found based on your search"
+
+        elif instruct == "too_many_cases":
+            txt += 'There are multiple players with the same names. \nRefine your search, then try again.'
 
         # Unique Cases #
         elif instruct == "init_illegal_team_slots":
@@ -99,9 +129,6 @@ class Inhouse:
 
         elif instruct == "init_illegal_team_slots_captains":
             txt += "The team numbers are illegal, the setup must be a 5 vs 5!"
-
-        elif instruct == "swap_too_many_cases":
-            txt += "There are numerous players with the same names in Team 1. (**{0}**)\nRefine your search, then try again.".format(input_1)
 
         elif instruct == "swap_result":
             txt += "Swapped Players: **{0}** and **{1}**".format(input_1, input_2)
@@ -111,9 +138,6 @@ class Inhouse:
 
         elif instruct == "join_queue":
             txt += '**{0}** has joined the queue, [{1} / {2}] players needed'.format(input_1, input_2, input_3)
-
-        elif instruct == "leave_queue_too_many_cases":
-            txt += 'There are numerous players with the same names in the queue. (**{0}**)\nRefine your search, then try again.'.format(input_1)
 
         elif instruct == "leave_queue":
             txt += '**{0}** has left the queue, [{1} / {2}] players needed'.format(input_1, input_2, input_3)
@@ -189,7 +213,7 @@ class Inhouse:
                 mode = "Standard" # Fix text for printing
             elif inhouse_mode == 'captains':
                 # Slot checking for ONLY 5 VS 5
-                if int(t1_slots) != 5 and int(t2_slots) != 5:
+                if int(t1_slots) != 1 and int(t2_slots) != 1:
                     await self.bot.say(self.print_ih('init_illegal_team_slots_captains'))
                     return
                 else:
@@ -208,13 +232,40 @@ class Inhouse:
 
         await self.bot.say(self.print_ih('init_inhouse', member.display_name, inhouse_game, mode, t1_slots, t2_slots))
 
-    @inhouse.command(pass_context=True)
-    async def start(self, ctx):
-        """Starts a match"""
-        global inhouse_active
-        global inhouse_started
-        global inhouse_ready
+    def standard_setup(self):
+        """ Handle setup for STANDARD mode"""
         global inhouse_players
+
+        cur_t1_slots = 0
+        # While there are still players not on any teams
+        while inhouse_players:
+            # Random players onto team 1 and once full, throw rest into team 2
+            randy = random.choice(inhouse_players)
+            inhouse_players.remove(randy)
+            inhouse_t1.append(randy)
+            cur_t1_slots += 1
+
+            # Enough players on team 1
+            if cur_t1_slots == int(inhouse_t1_slots):
+
+                # Fill rest players into team 2
+                while inhouse_players:
+                    inhouse_t2.append(inhouse_players.pop())
+
+        # Print team rosters
+        #  Sort alphabetically
+        inhouse_t1.sort(key=lambda x: x.display_name)
+        inhouse_t2.sort(key=lambda x: x.display_name)
+
+    def captains_setup(self, *captains):
+        for i in captains:
+            print(i)
+        return
+
+    @inhouse.command(pass_context=True)
+    async def start(self, ctx, *args):
+        # Optional Params are for captains mode
+        global inhouse_started
 
         # Role Check
         member = ctx.message.author  # Fetch author user and permissions
@@ -236,28 +287,14 @@ class Inhouse:
             await self.bot.say(self.print_ih('inprogress_inhouse'))
             return
 
-        cur_t1_slots = 0
         inhouse_started = True
 
-        # While there are still players not on any teams
-        while inhouse_players:
-            # Random players onto team 1 and once full, throw rest into team 2
-            randy = random.choice(inhouse_players)
-            inhouse_players.remove(randy)
-            inhouse_t1.append(randy)
-            cur_t1_slots += 1
+        if inhouse_modes.get('captains') is True:
+            self.captains_setup(args) # Pass args to the captains_setup func
 
-            # Enough players on team 1
-            if cur_t1_slots == int(inhouse_t1_slots):
-
-                # Fill rest players into team 2
-                while inhouse_players:
-                    inhouse_t2.append(inhouse_players.pop())
-
-        # Print team rosters
-        #  Sort alphabetically
-        inhouse_t1.sort(key=lambda x: x.display_name)
-        inhouse_t2.sort(key=lambda x: x.display_name)
+        # For any other cases, DEFAULT to Standard
+        else:
+            self.standard_setup()
         await self.bot.say(self.print_ih("ready_help") + '\n' + self.print_ih("teams"))
 
     @inhouse.command(pass_context=True, aliases=['rm'])
@@ -369,30 +406,16 @@ class Inhouse:
         if self.check_role(member, "Inhouse") is False:
             return
 
-        # Find player if optional arg is given #
-        if player is not None:
-            target = ""
-            # Regex to match all found names for team 1
-            player_pattern = r'((' + re.escape(player.lower()) + r')+(.)*)'
-            matches = [x for x, x in enumerate(inhouse_players) if re.search(player_pattern, x.display_name.lower())]
+        # Set player to actual member object if pass all checks
+        player = self.search_player(player, inhouse_players)
 
-            # Return first player match of exact string
-            for x in matches:
-                if x.display_name.lower() == player.lower() or len(matches) == 1:
-                    target = x
-                    break
-
-            # If numerous matches, but no name exactly matches the given string
-            if len(matches) > 1 and not target:
-                dupe = ','.join(str(x.display_name) for x in matches)
-                await self.bot.say(self.print_ih('leave_queue_too_many_cases', dupe))
-                return
-            elif len(matches) < 1:
-                await self.bot.say(self.print_ih('not_found', player))
-                return
-
-            # Set player to actual member object if pass all checks
-            player = target
+        # Check for any error codes returned
+        if(player == -1):
+            await self.bot.say(self.print_ih('too_many_cases'))
+            return
+        elif(player == 0):
+            await self.bot.say(self.print_ih('not_found'))
+            return
 
         # Check if member readied originally
         if member not in inhouse_players and player is None:
@@ -444,45 +467,25 @@ class Inhouse:
             return
 
         # Find Team 1 PLAYER #
-        t1_player = None  # Team 1 Target Player
-        # Regex to match all found names for team 1
-        p1_pattern = r'((' + re.escape(t1_name.lower()) + r')+(.)*)'
-        t1_matches = [x for x, x in enumerate(inhouse_t1) if re.search(p1_pattern, x.display_name.lower())]
+        t1_player = self.search_player(t1_name, inhouse_t1) # Team 1 Target Player
 
-        # Return first player match of exact string
-        for x in t1_matches:
-            if x.display_name.lower() == t1_name.lower() or len(t1_matches) == 1:
-                t1_player = x
-                break
-
-        # If numerous matches, but no name exactly matches the given string
-        if len(t1_matches) > 1 and t1_player is None:
-            t1_dupe = ','.join(str(x.display_name) for x in t1_matches)
-            await self.bot.say(self.print_ih('swap_too_many_cases', t1_dupe))
+        # Check for any error codes returned
+        if(t1_player == -1):
+            await self.bot.say(self.print_ih('too_many_cases'))
             return
-        elif len(t1_matches) < 1:
-            await self.bot.say(self.print_ih('not_found', t1_name))
+        elif(t1_player == 0):
+            await self.bot.say(self.print_ih('not_found'))
             return
 
         # Find Team 2 PLAYER #
-        t2_player = None  # Team 2 Target Player
-        # Regex to match all found names for team 2
-        p2_pattern = r'((' + re.escape(t2_name.lower()) + r')+(.)*)'
-        t2_matches = [x for x, x in enumerate(inhouse_t2) if re.search(p2_pattern, x.display_name.lower())]
+        t2_player = self.search_player(t2_name, inhouse_t2) # Team 2 Target Player
 
-        # Return first player match of exact string
-        for x in t2_matches:
-            if x.display_name.lower() == t2_name.lower() or len(t2_matches) == 1:
-                t2_player = x
-                break
-
-        # If numerous matches, but no name exactly matches the given string
-        if len(t2_matches) > 1 and t2_player is None:
-            t2_dupe = ','.join(str(x.display_name) for x in t2_matches)
-            await self.bot.say(self.print_ih('swap_too_many_cases', t2_dupe))
+        # Check for any error codes returned
+        if(t2_player == -1):
+            await self.bot.say(self.print_ih('too_many_cases'))
             return
-        elif len(t2_matches) < 1:
-            await self.bot.say(self.print_ih('not_found', t2_name))
+        elif(t2_player == 0):
+            await self.bot.say(self.print_ih('not_found'))
             return
 
         # Swap respective players and print new teams
@@ -766,4 +769,3 @@ class Inhouse:
 
 def setup(bot):
     bot.add_cog(Inhouse(bot))
-
