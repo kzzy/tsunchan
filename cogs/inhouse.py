@@ -12,14 +12,21 @@ inhouse_game = "" # Inhouse game name
 inhouse_players = []  # List for !inhouse players
 inhouse_current = 0  # Current amount of players
 inhouse_total = 0  # Total amount players
+t1_captain = None # Team 1 Captain in Captain's Mode
+t2_captain = None # Team 2 Captain in Captain's Mode
 inhouse_t1 = []  # List for Team 1 players
 inhouse_t2 = []  # List for Team 2 players
 inhouse_t1_slots = 0  # Team 1 total slots
 inhouse_t2_slots = 0  # Team 2 total slots
-inhouse_channels = {'Lobby' : '395892786999721986',      # Lobby     ID
-                    'Channel 1' : '395897418094215168',  # Channel 1 ID
-                    'Channel 2' : '395897458032377859',  # Channel 2 ID
+inhouse_channels = {'Lobby' : '395892786999721986',       # Lobby     ID
+                    'Channel 1' : '395897418094215168',   # Channel 1 ID
+                    'Channel 2' : '395897458032377859',   # Channel 2 ID
+                    'Inhouse Text' : '396568588934447105', # Text Channel ID
+                    'Debug' : '401729963704975362'
                     }
+inhouse_cpt_screen = "" # Text print for cpt mode picking phase
+inhouse_cpt_ttp = None  # Captain's turn to pick
+inhouse_picking = False # Boolean used to check if Picking phase is in progress
 inhouse_mode = "" # Current Inhouse Mode
 inhouse_modes = {'standard' : False, # Hold mode names and boolean vals
                  'captains' : False}
@@ -78,8 +85,19 @@ class Inhouse:
                 elif player_t2 is None:
                     txt += "`{}`".format(player_t1.display_name)
                 else:
-                    txt += "`{:<35}{}`".format(player_t1.display_name, player_t2.display_name)
+                    if player_t1 is t1_captain and player_t2 is t2_captain:
+                        txt += "`(CPT) {:<29}(CPT) {}`".format(player_t1.display_name, player_t2.display_name)
+                    else:
+                        txt += "`{:<35}{}`".format(player_t1.display_name, player_t2.display_name)
                 txt += '\n'
+
+        elif instruct == "teams_cpt":
+            txt = ""
+            txt += '```{0}\'s Turn to Pick```\n'.format(input_1)
+            txt += self.print_ih("teams")
+            txt += '\n\n'
+            player_list = "\n".join([str(x.display_name) for x in inhouse_players])
+            txt += player_list
 
         elif instruct == "ready_help":
             txt += "```Commands\n!inhouse move to start the match\n!inhouse scramble to randomize teams again.\n!inhouse swap <p1> <p2> to swap specific players.```"
@@ -118,7 +136,7 @@ class Inhouse:
             txt += 'Exited Inhouse session.'
 
         elif instruct == "not_found":
-            txt += "There were multiple names found based on your search"
+            txt += "There were no names found with your search."
 
         elif instruct == "too_many_cases":
             txt += 'There are multiple players with the same names. \nRefine your search, then try again.'
@@ -162,6 +180,18 @@ class Inhouse:
 
         elif instruct == "invalid_mode":
             txt += 'The given mode: **{0}** for the Inhouse is invalid.'.format(input_1)
+        elif instruct == "cpt_too_many_args":
+            txt += '```Too many args were given for captains mode\nLeave it blank for Random Captains, otherwise specify the Names\n\n'
+            txt += 'Run the !start command again```'
+
+        elif instruct == "not_a_cpt":
+            txt += 'You are not a captain in this round.'
+
+        elif instruct == "no_picking":
+            txt += 'Picking phase is not active.'
+
+        elif instruct == 'not_cpt_turn':
+            txt += 'It is not your turn to pick.'
 
         return txt
 
@@ -210,10 +240,10 @@ class Inhouse:
 
             if inhouse_mode == 'standard':
                 inhouse_modes.update({"standard": True})
-                mode = "Standard" # Fix text for printing
+                mode = "Standard"
             elif inhouse_mode == 'captains':
                 # Slot checking for ONLY 5 VS 5
-                if int(t1_slots) != 1 and int(t2_slots) != 1:
+                if int(t1_slots) != 5 and int(t2_slots) != 5:
                     await self.bot.say(self.print_ih('init_illegal_team_slots_captains'))
                     return
                 else:
@@ -226,13 +256,13 @@ class Inhouse:
 
         inhouse_active = True
         inhouse_game = game
-        inhouse_t1_slots = t1_slots
-        inhouse_t2_slots = t2_slots
+        inhouse_t1_slots = int(t1_slots)
+        inhouse_t2_slots = int(t2_slots)
         inhouse_total = int(t1_slots) + int(t2_slots)
 
         await self.bot.say(self.print_ih('init_inhouse', member.display_name, inhouse_game, mode, t1_slots, t2_slots))
 
-    def standard_setup(self):
+    async def standard_setup(self):
         """ Handle setup for STANDARD mode"""
         global inhouse_players
 
@@ -252,18 +282,212 @@ class Inhouse:
                 while inhouse_players:
                     inhouse_t2.append(inhouse_players.pop())
 
-        # Print team rosters
-        #  Sort alphabetically
+        # Sort alphabetically
         inhouse_t1.sort(key=lambda x: x.display_name)
         inhouse_t2.sort(key=lambda x: x.display_name)
 
-    def captains_setup(self, *captains):
-        for i in captains:
-            print(i)
-        return
+        await self.bot.say(self.print_ih("ready_help") + '\n' + self.print_ih("teams"))
+
+    async def captains_setup(self, captains):
+        global inhouse_started
+        global t1_captain
+        global t2_captain
+
+        # Randomize order of captains
+        captains = list(captains)
+        random_pick = random.choice(captains)
+
+        """ Handle setup for CAPTAINS mode"""
+        # Manual Captain Picking
+        if len(captains) > 0:
+            t1_captain = self.search_player(random_pick, inhouse_players)
+            captains.remove(random_pick)    # Remove as there are two players remaining
+
+            # Check for any error codes returned
+            if (t1_captain == -1):
+                await self.bot.say(self.print_ih('too_many_cases'))
+                return
+            elif (t1_captain == 0):
+                await self.bot.say(self.print_ih('not_found'))
+                return
+
+            t2_captain = self.search_player(captains.pop(), inhouse_players) # Pop as there is only one player remaining
+            if (t2_captain == -1):
+                await self.bot.say(self.print_ih('too_many_cases'))
+                return
+            elif (t2_captain == 0):
+                await self.bot.say(self.print_ih('not_found'))
+                return
+
+            # Move the captains to their respective team fields
+            inhouse_t1.append(inhouse_players.pop(inhouse_players.index(t1_captain)))
+            inhouse_t2.append(inhouse_players.pop(inhouse_players.index(t2_captain)))
+
+        # Random Captains
+        else:
+            t1_captain = random.choice(inhouse_players)
+            inhouse_t1.append(inhouse_players.pop(inhouse_players.index(t1_captain)))
+            t2_captain = random.choice(inhouse_players)
+            inhouse_t2.append(inhouse_players.pop(inhouse_players.index(t2_captain)))
+
+        # Move Captains into their voice channel first
+        await self.bot.move_member(t1_captain, self.bot.get_channel(inhouse_channels.get("Channel 1")))
+        await self.bot.move_member(t2_captain, self.bot.get_channel(inhouse_channels.get("Channel 2")))
+
+        global inhouse_cpt_screen
+        global inhouse_picking
+        inhouse_started = True
+        inhouse_picking = True
+
+        # Captains on team already
+        txt = self.print_ih('teams_cpt', t1_captain.display_name)
+        inhouse_cpt_screen = await self.bot.send_message(self.bot.get_channel(inhouse_channels.get("Inhouse Text")), txt)
+        await self.pick_order()
+
+    async def pick_order(self):
+        """ Function to control captain's mode pick order"""
+        """1-2-2-1-1"""
+        global inhouse_cpt_ttp
+
+        # Start
+        if len(inhouse_t1) == 1 and len(inhouse_t2) == 1:
+            inhouse_cpt_ttp = t1_captain
+
+        # Team 1 Picked 1
+        if len(inhouse_t1) == 2 and len(inhouse_t2) == 1:
+            txt = self.print_ih('teams_cpt', t2_captain.display_name)
+            await self.bot.edit_message(inhouse_cpt_screen, txt)
+            inhouse_cpt_ttp = t2_captain
+
+        # Team 2 Pick 1
+        if len(inhouse_t1) == 2 and len(inhouse_t2) == 2:
+            txt = self.print_ih('teams_cpt', t2_captain.display_name)
+            await self.bot.edit_message(inhouse_cpt_screen, txt)
+
+        # Team 2 Pick 1
+        if len(inhouse_t1) == 2 and len(inhouse_t2) == 3:
+            txt = self.print_ih('teams_cpt', t1_captain.display_name)
+            await self.bot.edit_message(inhouse_cpt_screen, txt)
+            inhouse_cpt_ttp = t1_captain
+
+        # Team 1 Pick 1
+        if len(inhouse_t1) == 3 and len(inhouse_t2) == 3:
+            txt = self.print_ih('teams_cpt', t1_captain.display_name)
+            await self.bot.edit_message(inhouse_cpt_screen, txt)
+
+        # Team 1 Pick 1
+        if len(inhouse_t1) == 4 and len(inhouse_t2) == 3:
+            txt = self.print_ih('teams_cpt', t2_captain.display_name)
+            await self.bot.edit_message(inhouse_cpt_screen, txt)
+            inhouse_cpt_ttp = t2_captain
+
+        # Team 2 Picked 1
+        if len(inhouse_t1) == 4 and len(inhouse_t2) == 4:
+            txt = self.print_ih('teams_cpt', t1_captain.display_name)
+            await self.bot.edit_message(inhouse_cpt_screen, txt)
+            inhouse_cpt_ttp = t1_captain
+
+        # Team 1 Picked 1
+        if len(inhouse_t1) == 5 and len(inhouse_t2) == 4:
+            txt = self.print_ih('teams_cpt', t2_captain.display_name)
+            await self.bot.edit_message(inhouse_cpt_screen, txt)
+
+        # Team 2 Picked 1
+        if len(inhouse_t1) == 5 and len(inhouse_t2) == 5:
+            txt = '```Final Teams!```\n'
+            txt += self.print_ih('teams')
+            await self.bot.edit_message(inhouse_cpt_screen, self.print_ih('teams'))
+            inhouse_cpt_ttp = None
+
+    @inhouse.command(pass_context=True, aliases=['p'])
+    async def pick(self, ctx, player: str):
+        """Pick for Captain's Mode"""
+        global inhouse_picking
+        # Role Check
+        member = ctx.message.author  # Fetch author user and permissions
+        if self.check_role(member, "Inhouse") is False:
+            return
+
+        # Check for active inhouse
+        if inhouse_active is False:
+            await self.bot.say(self.print_ih('inactive_inhouse'))
+            return
+
+        # Check if inhouse is full and ready to go
+        if inhouse_ready is False:
+            await self.bot.say(self.print_ih('not_enough_queue'))
+            return
+
+        # Check if there is no inhouse in-progress
+        if inhouse_started is False:
+            await self.bot.say(self.print_ih('no_inprogress_inhouse'))
+            return
+
+        # Check if its picking phase
+        if inhouse_picking is False:
+            await self.bot.say(self.print_ih('no_picking'))
+            return
+
+        # Check if author is a captain
+        if member is not t1_captain and member is not t2_captain:
+            await self.bot.say(self.print_ih('not_a_cpt'))
+            return
+
+        # Not this specific captain's turn to pick
+        if member is not inhouse_cpt_ttp:
+            await self.bot.say(self.print_ih('not_cpt_turn'))
+            return
+
+        await self.bot.delete_message(ctx.message) # Delete pick msg to avoid clutter after checks
+
+        # Pick players and move them into the voice channels automatically
+        if member is t1_captain:
+            player = self.search_player(player, inhouse_players)
+            # Check for any error codes returned
+            if (player == -1):
+                await self.bot.say(self.print_ih('too_many_cases'))
+                return
+            elif (player == 0):
+                await self.bot.say(self.print_ih('not_found'))
+                return
+            inhouse_t1.append(inhouse_players.pop(inhouse_players.index(player)))
+            await self.bot.move_member(player, self.bot.get_channel(inhouse_channels.get("Channel 1")))
+        else:
+            player = self.search_player(player, inhouse_players)
+            # Check for any error codes returned
+            if (player == -1):
+                await self.bot.say(self.print_ih('too_many_cases'))
+                return
+            elif (player == 0):
+                await self.bot.say(self.print_ih('not_found'))
+                return
+            inhouse_t2.append(inhouse_players.pop(inhouse_players.index(player)))
+            await self.bot.move_member(player, self.bot.get_channel(inhouse_channels.get("Channel 2")))
+
+        # Check if only one player remains after pick and auto move to team missing the player
+        # Also moves them into voice channel
+        if len(inhouse_t1) == inhouse_t1_slots:
+            player = inhouse_players.pop()
+            inhouse_t2.append(player)
+            await self.bot.move_member(player, self.bot.get_channel(inhouse_channels.get("Channel 2")))
+
+            # Turn off picking
+            inhouse_picking = False
+
+        elif len(inhouse_t2) == inhouse_t2_slots:
+            player = inhouse_players.pop()
+            inhouse_t1.append(player)
+            await self.bot.move_member(player, self.bot.get_channel(inhouse_channels.get("Channel 1")))
+
+            # Turn off picking
+            inhouse_picking = False
+
+        # Evaluate pick order
+        await self.pick_order()
 
     @inhouse.command(pass_context=True)
     async def start(self, ctx, *args):
+        """Starts an inhouse"""
         # Optional Params are for captains mode
         global inhouse_started
 
@@ -287,15 +511,17 @@ class Inhouse:
             await self.bot.say(self.print_ih('inprogress_inhouse'))
             return
 
-        inhouse_started = True
-
         if inhouse_modes.get('captains') is True:
-            self.captains_setup(args) # Pass args to the captains_setup func
-
-        # For any other cases, DEFAULT to Standard
+            # inhouse_started will be set once further checks in captains_setup are fulfilled
+            # No args = Random Captains | MAX 2 args = 1 Captain per team
+            if len(args) > 2:
+                await self.bot.say(self.print_ih('cpt_too_many_args'))
+                return
+            await self.captains_setup(args) # Pass args to the captains_setup func
         else:
-            self.standard_setup()
-        await self.bot.say(self.print_ih("ready_help") + '\n' + self.print_ih("teams"))
+            # Default
+            inhouse_started = True
+            await self.standard_setup()
 
     @inhouse.command(pass_context=True, aliases=['rm'])
     async def rematch(self, ctx):
@@ -355,7 +581,28 @@ class Inhouse:
         inhouse_t1.sort(key=lambda x: x.display_name)
         inhouse_t2.sort(key=lambda x: x.display_name)
         await self.bot.say(self.print_ih("ready_help_rematch", member.display_name) + '\n' + self.print_ih("teams"))
-        
+
+    @inhouse.command(aliases=['fk'], hidden=True)
+    async def db(self):
+        """ Debugger to just randomly move ppl into inhouse_players to test other funcs"""
+        global inhouse_current
+        global inhouse_total
+        everybody = []
+        for x in self.bot.get_all_members():
+            everybody.append(x)
+
+        txt = ""
+        guy = ""
+        while(inhouse_current != inhouse_total):
+            guy = everybody.pop()
+            txt += "{0}\n".format(guy.display_name)
+            inhouse_players.append(guy)
+            inhouse_current += 1
+
+        global inhouse_ready
+        inhouse_ready = True
+        await self.bot.say('**__Added__**\n' + txt)
+
     @inhouse.command(pass_context=True, aliases=['j'])
     async def join(self, ctx):
         """Joins the queue"""
@@ -368,9 +615,9 @@ class Inhouse:
             return
 
         # Check if readied already
-        #if member in inhouse_players:
-        #    await self.bot.say(self.print_ih('already_in_queue', member.display_name))
-        #    return
+        if member in inhouse_players:
+            await self.bot.say(self.print_ih('already_in_queue', member.display_name))
+            return
 
         # Check for active inhouse
         if inhouse_active is False:
@@ -407,15 +654,16 @@ class Inhouse:
             return
 
         # Set player to actual member object if pass all checks
-        player = self.search_player(player, inhouse_players)
+        if player is not None:
+            player = self.search_player(player, inhouse_players)
 
-        # Check for any error codes returned
-        if(player == -1):
-            await self.bot.say(self.print_ih('too_many_cases'))
-            return
-        elif(player == 0):
-            await self.bot.say(self.print_ih('not_found'))
-            return
+            # Check for any error codes returned
+            if(player == -1):
+                await self.bot.say(self.print_ih('too_many_cases'))
+                return
+            elif(player == 0):
+                await self.bot.say(self.print_ih('not_found'))
+                return
 
         # Check if member readied originally
         if member not in inhouse_players and player is None:
@@ -650,6 +898,9 @@ class Inhouse:
         global inhouse_t1_slots
         global inhouse_t2_slots
         global inhouse_game
+        global t1_captain
+        global t2_captain
+        global inhouse_picking
 
         # Role Check
         member = ctx.message.author  # Fetch author user and permissions
@@ -660,9 +911,12 @@ class Inhouse:
             # Reset variables
             inhouse_modes.update({"standard": False})
             inhouse_modes.update({"captains": False})
+            t1_captain = None
+            t2_captain = None
             inhouse_active = False
             inhouse_started = False
             inhouse_ready = False
+            inhouse_picking = False
             inhouse_current = 0
             inhouse_total = 0
             inhouse_t1_slots = 0
