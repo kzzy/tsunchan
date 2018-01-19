@@ -9,7 +9,7 @@ class Voice:
     async def voice(self):
         return
 
-    @commands.group(pass_context=True, aliases=['j'])
+    @voice.command(pass_context=True, aliases=['j'])
     async def join(self, ctx):
         """ Joins the author's voice channel """
         member = ctx.message.author
@@ -21,7 +21,7 @@ class Voice:
         # Initiate voice client for bot
         self.bot_voice_client = await self.bot.join_voice_channel(channel)
 
-    @commands.group(pass_context=True, aliases=['uj'])
+    @voice.command(pass_context=True, aliases=['uj'])
     async def leave(self, ctx):
         """ Leaves any voice channel"""
         # Not in voice
