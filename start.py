@@ -14,7 +14,8 @@ import random
 
 startup_extensions = (
     'cogs.rng',
-    'cogs.inhouse'
+    'cogs.inhouse',
+    'cogs.voice'
 )
 
 """Command Prefix"""
