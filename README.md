@@ -1,6 +1,12 @@
-# tsunchan
+# Project Title
 
-The daughteru awakens
-hooray
+Tsunchan is a bot made for the Discord application. It is coded in Python3 using discord.py.
 
-DoB: 9/28/2016
+## Getting Started
+
+Manual Installation for now
+
+### Installing
+
+To install the bot, you must have discord.py installed.
+Enter the bot token in start.py.
